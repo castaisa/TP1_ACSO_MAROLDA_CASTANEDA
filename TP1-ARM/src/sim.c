@@ -3,7 +3,7 @@
 #include <string.h>
 #include "shell.h"
 
-#define OPCODE_TABLE_SIZE 8
+#define OPCODE_TABLE_SIZE 50
 // #define MASK_21 0x7FF
 // #define MASK_26 0x3F
 // #define MASK_24 0x3F
@@ -24,7 +24,7 @@ typedef struct instruction_t{
     uint32_t br_address;
     uint32_t cond_br_address;
     uint32_t mov_immediate;
-    char type[4];  // Ahora puede almacenar "R", "I", "D", "B", "CB", "IW"
+    char type[20];  // Ahora puede almacenar "R", "I", "D", "B", "CB", "IW"
     char *name;     // Nombre de la instrucción
 } instruction;
 
@@ -37,48 +37,48 @@ void implement_ADDS(instruction instruct);
 // void decode_instruction_with_opcode(instruction *instr);
 
 
-instruction opcode_table[OPCODE_TABLE_SIZE] = {
+const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     // ADD/SUBSTRACT (immediate)
-    {10100101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADDS(Extended Register)"},  // pg 257
-    {10110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADDS(immediate)"},
-    {11100101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUBS(Extended Register)"},
-    {11110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUBS(immediate)"},
-    {000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "HLT"},
-    {000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "CMP"},
+    {0b10100101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADDS(Extended Register)"},  // pg 257
+    {0b10110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADDS(immediate)"},
+    {0b11100101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUBS(Extended Register)"},
+    {0b11110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUBS(immediate)"},
+    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "HLT"},
+    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "CMP"},
     // {1111001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ANDS(Immediate)"}, // nose que pag
-    {111010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ANDS(Shifted Register)"},  //pg 256
+    {0b111010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ANDS(Shifted Register)"},  //pg 256
     // {1101001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "EOR(Shifted Register)"},
-    {110010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "EOR(Shifted Register)"},
+    {0b110010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "EOR(Shifted Register)"},
     // {1011001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ORR(Shifted Register)"},
-    {101010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ORR(Shifted Register)"},
-    {000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G10", "B"},
-    {000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G9", "BR"},
-    {000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BEQ"},
-    {000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BNE"},
-    {000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BGT"},
-    {000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BLT"},
-    {000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BGE"},
-    {000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BLE"},
-    {11010011011, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LSL"},
-    {11010011010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LSR"},
-    {11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STUR"},
-    // {11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STUR"},    // pg 236
-    {11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURB"},
-    // {00111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STURB"},   // pg 235
-    {11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURH"},
-    // {01111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STURH"},   // pg 235
-    {11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDUR"},
-    // {11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LDUR"},    // pg 235
-    {11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURH"},
-    // {01111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LDURH"},   // pg 235
-    {11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},
-    // {00111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},   // pg 235
-    {110100101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G4", "MOVZ"}
-    {10000101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(Extended Register)"},
-    {10010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(immediate)"},
-    {000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "MUL"},
-    {10110100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G11", "CBZ"}
-    {10110101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G11", "CBNZ"}
+    {0b101010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ORR(Shifted Register)"},
+    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G10", "B"},
+    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G9", "BR"},
+    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BEQ"},
+    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BNE"},
+    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BGT"},
+    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BLT"},
+    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BGE"},
+    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BLE"},
+    {0b11010011011, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LSL"},
+    {0b11010011010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LSR"},
+    // {11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STUR"},
+    {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STUR"},    // pg 236
+    // {11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURB"},
+    {0b00111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STURB"},   // pg 235
+    // {11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURH"},
+    {0b01111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STURH"},   // pg 235
+    // {11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDUR"},
+    {0b11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LDUR"},    // pg 235
+    // {11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURH"},
+    {0b01111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LDURH"},   // pg 235
+    // {11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},
+    {0b00111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},   // pg 235
+    {0b110100101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G4", "MOVZ"},
+    {0b10000101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(Extended Register)"},
+    {0b10010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(immediate)"},
+    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "MUL"},
+    {0b10110100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G11", "CBZ"},
+    {0b10110101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G11", "CBNZ"},
 
     // {11010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUB(immediate)"},
     // {1001001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "AND(immediate)"},
@@ -99,7 +99,7 @@ void process_instruction()
     // falta:
         // funcion que con el opcod complete el resto de la instruccion
         // tabla de hash con los posibles opcodes
-    if (instruct.name == "ADDS(immediate)") implement_ADDS(instruct);
+    if (strcmp(instruct.name, "ADDS(immediate)") == 0) implement_ADDS(instruct);
     // if (instruct.name == "SUBS") implement_SUBS(instruct);
     // if (instruct.name == "HLT") implement_HLT(instruct);
     // if (instruct.name == "CMP") implement_CMP(instruct);
@@ -191,24 +191,45 @@ void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
 
 void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
     // falta completar el resto de la instruccion con el opcode
-    // if instr->name == 'R':
-    // if instr->name == 'I':
-    // if instr->name == 'D':
-    // if instr->name == 'B':
-    // if instr->name == 'CB':
-    // if instr->name == 'IW':
-    
-    // instr->rd = 
-    // instr->rn = 
-    // instr->rm = 
-    // instr->shamt = 
-    // instr->alu_immediate = 
-    // instr->dt_address = 
-    // instr->br_address = 
-    // instr->cond_br_address = 
-    // instr->mov_immediate = 
-    // instr->type = 
-}
+    // Completar el resto de la instrucción con el opcode
+     if (strcmp(instr->type, "G1") == 0) {
+        instr->rd = bytecode & 0x1F;             // Bits [4:0] - Registro de destino
+        instr->rn = (bytecode >> 5) & 0x1F;      // Bits [9:5] - Registro fuente
+        instr->alu_immediate = (bytecode >> 10) & 0xFFF;  // Bits [21:10] - Inmediato ALU
+        instr->shamt = (bytecode >> 22) & 0x3;   // Bits [23:22] - Shift amount
+        strcpy(instr->type, "G1");
+    } else if (strcmp(instr->type, "G3") == 0) {
+        instr->rd = bytecode & 0x1F;             // Bits [4:0] - Registro de destino
+        instr->rn = (bytecode >> 5) & 0x1F;      // Bits [9:5] - Registro fuente
+        instr->alu_immediate = (bytecode >> 10) & 0xFFF;  // Bits [21:10] - Inmediato ALU
+        instr->shamt = (bytecode >> 22) & 0x3;   // Bits [23:22] - Shift amount
+        strcpy(instr->type, "G3");
+    } else if (strcmp(instr->type, "G7") == 0) {
+        instr->cond_br_address = (bytecode >> 5) & 0xFFFF;  // Bits [20:5] - Dirección de salto condicional
+        strcpy(instr->type, "G7");
+    } else if (strcmp(instr->type, "G11") == 0) {
+        instr->br_address = (bytecode >> 5) & 0x7FFFF;  // Bits [23:5] - Dirección de salto
+        instr->rn = bytecode & 0x1F;                    // Bits [4:0] - Registro fuente
+        strcpy(instr->type, "G11");
+    } else if (strcmp(instr->type, "G13") == 0) {
+        instr->rd = bytecode & 0x1F;             // Bits [4:0] - Registro de destino
+        instr->rn = (bytecode >> 5) & 0x1F;      // Bits [9:5] - Registro fuente
+        instr->dt_address = (bytecode >> 10) & 0x1FF;  // Bits [18:10] - Dirección de datos
+        strcpy(instr->type, "G13");
+    }
+
+        // if (sf == 1 && op == 0 && S == 0) {
+        //     instr->name = "ADD (immediate)";
+        // } else if (sf == 1 && op == 0 && S == 1) {
+        //     instr->name = "ADDS (immediate)";
+        // } else if (sf == 1 && op == 1 && S == 0) {
+        //     instr->name = "SUB (immediate)";
+        // } else if (sf == 1 && op == 1 && S == 1) {
+        //     instr->name = "SUBS (immediate)";
+        // }
+
+        
+    }
 
 // INSTRUCCIONES -------------------------------------------------------------------------------------------
 
