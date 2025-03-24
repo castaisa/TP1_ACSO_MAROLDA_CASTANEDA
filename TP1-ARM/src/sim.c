@@ -8,10 +8,10 @@
 // #define MASK_26 0x3F
 // #define MASK_24 0x3F
 // #define MASK_22 0x7FF
-#define MASK_21 0b00000111111111111  // 0x7FF  = 0000 0111 1111 1111 (11 bits en 1)
-#define MASK_26 0b00111111          // 0x3F   = 0011 1111 (6 bits en 1)
-#define MASK_24 0b00111111          // 0x3F   = 0011 1111 (6 bits en 1)
-#define MASK_22 0b00000111111111111 // 0x7FF  = 0000 0111 1111 1111 (11 bits en 1)
+// #define MASK_21 0b00000111111111111  // 0x7FF  = 0000 0111 1111 1111 (11 bits en 1)
+//#define MASK_26 0b00111111          // 0x3F   = 0011 1111 (6 bits en 1)
+//#define MASK_24 0b00111111          // 0x3F   = 0011 1111 (6 bits en 1)
+//#define MASK_22 0b00000111111111111 // 0x7FF  = 0000 0111 1111 1111 (11 bits en 1)
 
 typedef struct instruction_t{
     uint32_t opcode;
@@ -32,7 +32,11 @@ void process_instruction();
 instruction decode_instruction(uint32_t bytecode);
 void decode_instruction_opcode(instruction *instr, uint32_t bytecode);
 void decode_completely_instruction(instruction *instr, uint32_t bytecode);
-void implement_ADDS(instruction instruct);
+
+void implement_ADDS_immediate(instruction instruct);
+void implement_ADDS_extended_register(instruction instruct);
+void implement_SUBS_immediate(instruction instruct);
+
 
 // void decode_instruction_with_opcode(instruction *instr);
 
@@ -40,45 +44,46 @@ void implement_ADDS(instruction instruct);
 const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     // ADD/SUBSTRACT (immediate)
     {0b10100101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADDS(Extended Register)"},  // pg 257
-    {0b10110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADDS(immediate)"},
-    {0b11100101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUBS(Extended Register)"},
+    // opcode antes {0b10110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADDS(immediate)"},
+    {0b10110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADDS(immediate)"}, 
+    // {0b11100101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUBS(Extended Register)"},
     {0b11110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUBS(immediate)"},
-    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "HLT"},
-    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "CMP"},
-    // {1111001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ANDS(Immediate)"}, // nose que pag
-    {0b111010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ANDS(Shifted Register)"},  //pg 256
-    // {1101001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "EOR(Shifted Register)"},
-    {0b110010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "EOR(Shifted Register)"},
-    // {1011001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ORR(Shifted Register)"},
-    {0b101010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ORR(Shifted Register)"},
-    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G10", "B"},
-    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G9", "BR"},
-    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BEQ"},
-    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BNE"},
-    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BGT"},
-    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BLT"},
-    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BGE"},
-    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BLE"},
-    {0b11010011011, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LSL"},
-    {0b11010011010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LSR"},
-    // {11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STUR"},
-    {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STUR"},    // pg 236
-    // {11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURB"},
-    {0b00111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STURB"},   // pg 235
-    // {11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURH"},
-    {0b01111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STURH"},   // pg 235
-    // {11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDUR"},
-    {0b11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LDUR"},    // pg 235
-    // {11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURH"},
-    {0b01111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LDURH"},   // pg 235
-    // {11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},
-    {0b00111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},   // pg 235
-    {0b110100101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G4", "MOVZ"},
-    {0b10000101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(Extended Register)"},
-    {0b10010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(immediate)"},
-    {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "MUL"},
-    {0b10110100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G11", "CBZ"},
-    {0b10110101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G11", "CBNZ"},
+    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "HLT"},
+    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "CMP"},
+    // // {1111001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ANDS(Immediate)"}, // nose que pag
+    // {0b111010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ANDS(Shifted Register)"},  //pg 256
+    // // {1101001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "EOR(Shifted Register)"},
+    // {0b110010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "EOR(Shifted Register)"},
+    // // {1011001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ORR(Shifted Register)"},
+    // {0b101010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ORR(Shifted Register)"},
+    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G10", "B"},
+    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G9", "BR"},
+    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BEQ"},
+    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BNE"},
+    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BGT"},
+    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BLT"},
+    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BGE"},
+    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BLE"},
+    // {0b11010011011, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LSL"},
+    // {0b11010011010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LSR"},
+    // // {11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STUR"},
+    // {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STUR"},    // pg 236
+    // // {11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURB"},
+    // {0b00111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STURB"},   // pg 235
+    // // {11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURH"},
+    // {0b01111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STURH"},   // pg 235
+    // // {11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDUR"},
+    // {0b11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LDUR"},    // pg 235
+    // // {11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURH"},
+    // {0b01111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LDURH"},   // pg 235
+    // // {11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},
+    // {0b00111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},   // pg 235
+    // {0b110100101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G4", "MOVZ"},
+    // {0b10000101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(Extended Register)"},
+    // {0b10010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(immediate)"},
+    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "MUL"},
+    // {0b10110100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G11", "CBZ"},
+    // {0b10110101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G11", "CBNZ"},
 
     // {11010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUB(immediate)"},
     // {1001001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "AND(immediate)"},
@@ -92,14 +97,18 @@ void process_instruction()
      * values in NEXT_STATE. You can call mem_read_32() and mem_write_32() to
      * access memory. 
      * */
-
+    printf("starting-----------");
     uint32_t bytecode = mem_read_32(CURRENT_STATE.PC);
     instruction instruct = decode_instruction(bytecode);
+    printf("Instrucción: %s\n", instruct.name);
+
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 
     // falta:
         // funcion que con el opcod complete el resto de la instruccion
         // tabla de hash con los posibles opcodes
-    if (strcmp(instruct.name, "ADDS(immediate)") == 0) implement_ADDS(instruct);
+    if (strcmp(instruct.name, "ADDS(immediate)") == 0) implement_ADDS_immediate(instruct);
+    if (strcmp(instruct.name, "ADDS(Extended Register)") == 0) implement_ADDS_extended_register(instruct);
     // if (instruct.name == "SUBS") implement_SUBS(instruct);
     // if (instruct.name == "HLT") implement_HLT(instruct);
     // if (instruct.name == "CMP") implement_CMP(instruct);
@@ -128,7 +137,6 @@ void process_instruction()
     // if (instruct.name == "CBZ") implement_CBZ(instruct);
     // if (instruct.name == "CBNZ") implement_CBNZ(instruct);
     
-
 }
 
 instruction decode_instruction(uint32_t bytecode) {
@@ -141,11 +149,60 @@ instruction decode_instruction(uint32_t bytecode) {
     return instr_def;
 }
 
+// void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
+    
+//     // type R, D, IW
+//     uint32_t opcode_21 = (bytecode >> 21) & MASK_21;
+//     printf("Opcode 21: %d\n", opcode_21);
+//     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
+//         if (opcode_table[i].opcode == opcode_21) {
+//             instr->opcode = opcode_table[i].opcode;
+//             instr->name = opcode_table[i].name;
+//             strcpy(instr->type, opcode_table[i].type);
+//             return;
+//         }
+//     }
+
+//     // type B
+//     uint32_t opcode_26 = (bytecode >> 26) & MASK_26;
+//     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
+//         if (opcode_table[i].opcode == opcode_26) {
+//             instr->opcode = opcode_table[i].opcode;
+//             instr->name = opcode_table[i].name;
+//             strcpy(instr->type, opcode_table[i].type);
+//             return;
+//         }
+//     }
+
+//     // type CB
+//     uint32_t opcode_24 = (bytecode >> 24) & MASK_24;
+//     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
+//         if (opcode_table[i].opcode == opcode_24) {
+//             instr->opcode = opcode_table[i].opcode;
+//             instr->name = opcode_table[i].name;
+//             strcpy(instr->type, opcode_table[i].type);
+//             return;
+//         }
+//     }
+
+//     // type I
+//     uint32_t opcode_22 = (bytecode >> 22) & MASK_22;
+//     printf("opcode_22: %d\n", opcode_22);
+//     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
+//         if (opcode_table[i].opcode == opcode_22) {
+//             instr->opcode = opcode_table[i].opcode;
+//             instr->name = opcode_table[i].name;
+//             strcpy(instr->type, opcode_table[i].type);
+//             return;
+//         }
+//     }    
+// }
+
 void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
     
-    // type R, D, IW
-    uint32_t opcode_21 = (bytecode >> 21) & MASK_21;
-
+    // Instrucciones tipo R, D, IW (Opcode en bits [31:21], 11 bits)
+    uint32_t opcode_21 = (bytecode >> 21) & 0x7FF;  
+    printf("Opcode 21: 0x%X\n", opcode_21);
     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
         if (opcode_table[i].opcode == opcode_21) {
             instr->opcode = opcode_table[i].opcode;
@@ -155,8 +212,8 @@ void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
         }
     }
 
-    // type B
-    uint32_t opcode_26 = (bytecode >> 26) & MASK_26;
+    // Instrucciones tipo B (Opcode en bits [31:26], 6 bits)
+    uint32_t opcode_26 = (bytecode >> 26) & 0x3F;
     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
         if (opcode_table[i].opcode == opcode_26) {
             instr->opcode = opcode_table[i].opcode;
@@ -166,8 +223,8 @@ void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
         }
     }
 
-    // type CB
-    uint32_t opcode_24 = (bytecode >> 24) & MASK_24;
+    // Instrucciones tipo CB (Opcode en bits [31:24], 8 bits)
+    uint32_t opcode_24 = (bytecode >> 24) & 0xFF;
     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
         if (opcode_table[i].opcode == opcode_24) {
             instr->opcode = opcode_table[i].opcode;
@@ -177,8 +234,9 @@ void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
         }
     }
 
-    // type I
-    uint32_t opcode_22 = (bytecode >> 22) & MASK_22;
+    // Instrucciones tipo I (Immediate) - Opcode en bits [31:22], 10 bits
+    uint32_t opcode_22 = (bytecode >> 22) & 0x3FF;  
+    printf("Opcode 22: 0x%X\n", opcode_22);
     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
         if (opcode_table[i].opcode == opcode_22) {
             instr->opcode = opcode_table[i].opcode;
@@ -188,6 +246,7 @@ void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
         }
     }    
 }
+
 
 void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
     // falta completar el resto de la instruccion con el opcode
@@ -217,43 +276,59 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
         instr->dt_address = (bytecode >> 10) & 0x1FF;  // Bits [18:10] - Dirección de datos
         strcpy(instr->type, "G13");
     }
-
-        // if (sf == 1 && op == 0 && S == 0) {
-        //     instr->name = "ADD (immediate)";
-        // } else if (sf == 1 && op == 0 && S == 1) {
-        //     instr->name = "ADDS (immediate)";
-        // } else if (sf == 1 && op == 1 && S == 0) {
-        //     instr->name = "SUB (immediate)";
-        // } else if (sf == 1 && op == 1 && S == 1) {
-        //     instr->name = "SUBS (immediate)";
-        // }
-
-        
-    }
+}
 
 // INSTRUCCIONES -------------------------------------------------------------------------------------------
 
-void implement_ADDS(instruction instruct) {
-    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
-    uint64_t op2;
+void implement_ADDS_immediate(instruction instruct) {
+    printf("Implementing ADDS(immediate)\n");
 
-    // Decodificar el segundo operando
-    if (strcmp(instruct.type, "I") == 0) { // Tipo inmediato
-        op2 = instruct.alu_immediate;
-        if (instruct.shamt == 1) {  // Aplicar shift si es necesario
-            op2 <<= 12;
-        }
-    } else { // Tipo registro
-        op2 = CURRENT_STATE.REGS[instruct.rm];
-    }
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
+    uint64_t op2 = instruct.alu_immediate;           // Inmediato ALU
 
     // Ejecutar la operación
     uint64_t result = op1 + op2;
+    printf("op1: 0x%" PRIx64 ", op2: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, op2, result);
     NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
 
     // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
     NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
     NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
+    printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
+}
+
+void implement_ADDS_extended_register(instruction instruct) {
+    printf("Implementing ADDS(extended register)\n");
+
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
+    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];  // Valor del registro rm
+
+    // Ejecutar la operación
+    uint64_t result = op1 + op2;
+    printf("op1: 0x%" PRIx64 ", op2: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, op2, result);
+    NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+
+    // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
+    NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
+    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
+    printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
+}
+
+void implement_SUBS_immediate(instruction instruct) {
+    printf("Implementing SUBS(immediate)\n");
+
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
+    uint64_t op2 = instruct.alu_immediate;           // Inmediato ALU
+
+    // Ejecutar la operación
+    uint64_t result = op1 - op2;
+    printf("op1: 0x%" PRIx64 ", op2: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, op2, result);
+    NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+
+    // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
+    NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
+    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
+    printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
 }
 
 
