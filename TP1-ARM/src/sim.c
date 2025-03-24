@@ -36,22 +36,25 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode);
 void implement_ADDS_immediate(instruction instruct);
 void implement_ADDS_extended_register(instruction instruct);
 void implement_SUBS_immediate(instruction instruct);
-
+void implement_SUBS_extended_register(instruction instruct);
+void implement_HLT(instruction instruct);
+void implement_ANDS_shifted_register(instruction instruct);
 
 // void decode_instruction_with_opcode(instruction *instr);
 
 
 const instruction opcode_table[OPCODE_TABLE_SIZE] = {
-    // ADD/SUBSTRACT (immediate)
-    {0b10100101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADDS(Extended Register)"},  // pg 257
-    // opcode antes {0b10110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADDS(immediate)"},
+    // {0b10101011001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADDS(Extended Register)"},  // pg 257
+    {0b1010101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ADDS(Extended Register)"},  // pg 257
     {0b10110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADDS(immediate)"}, 
-    // {0b11100101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUBS(Extended Register)"},
+    {0b1110101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "SUBS(Extended Register)"},
     {0b11110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUBS(immediate)"},
-    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "HLT"},
+    {0b00000000000000000000011010100010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "HLT"},
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "CMP"},
     // // {1111001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ANDS(Immediate)"}, // nose que pag
-    // {0b111010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ANDS(Shifted Register)"},  //pg 256
+    {0b11101010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ANDS(Shifted Register)"},  //pg 256
+    // {11101011000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ANDS(Shifted Register)"},  //pg 256
+
     // // {1101001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "EOR(Shifted Register)"},
     // {0b110010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "EOR(Shifted Register)"},
     // // {1011001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ORR(Shifted Register)"},
@@ -97,7 +100,7 @@ void process_instruction()
      * values in NEXT_STATE. You can call mem_read_32() and mem_write_32() to
      * access memory. 
      * */
-    printf("starting-----------");
+    printf("starting-----------\n");
     uint32_t bytecode = mem_read_32(CURRENT_STATE.PC);
     instruction instruct = decode_instruction(bytecode);
     printf("Instrucción: %s\n", instruct.name);
@@ -109,10 +112,11 @@ void process_instruction()
         // tabla de hash con los posibles opcodes
     if (strcmp(instruct.name, "ADDS(immediate)") == 0) implement_ADDS_immediate(instruct);
     if (strcmp(instruct.name, "ADDS(Extended Register)") == 0) implement_ADDS_extended_register(instruct);
-    // if (instruct.name == "SUBS") implement_SUBS(instruct);
-    // if (instruct.name == "HLT") implement_HLT(instruct);
+    if (strcmp(instruct.name, "SUBS(immediate)") == 0) implement_SUBS_immediate(instruct);
+    if (strcmp(instruct.name, "SUBS(Extended Register)") == 0) implement_SUBS_extended_register(instruct);
+    if (strcmp(instruct.name, "HLT") == 0) implement_HLT(instruct);
     // if (instruct.name == "CMP") implement_CMP(instruct);
-    // if (instruct.name == "ANDS") implement_ANDS(instruct);
+    if (strcmp(instruct.name, "ANDS/(Shifted Register)") == 0) implement_ANDS_shifted_register(instruct);
     // if (instruct.name == "EOR") implement_EOR(instruct);
     // if (instruct.name == "ORR") implement_ORR(instruct);
     // if (instruct.name == "B") implement_B(instruct);
@@ -149,54 +153,6 @@ instruction decode_instruction(uint32_t bytecode) {
     return instr_def;
 }
 
-// void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
-    
-//     // type R, D, IW
-//     uint32_t opcode_21 = (bytecode >> 21) & MASK_21;
-//     printf("Opcode 21: %d\n", opcode_21);
-//     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
-//         if (opcode_table[i].opcode == opcode_21) {
-//             instr->opcode = opcode_table[i].opcode;
-//             instr->name = opcode_table[i].name;
-//             strcpy(instr->type, opcode_table[i].type);
-//             return;
-//         }
-//     }
-
-//     // type B
-//     uint32_t opcode_26 = (bytecode >> 26) & MASK_26;
-//     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
-//         if (opcode_table[i].opcode == opcode_26) {
-//             instr->opcode = opcode_table[i].opcode;
-//             instr->name = opcode_table[i].name;
-//             strcpy(instr->type, opcode_table[i].type);
-//             return;
-//         }
-//     }
-
-//     // type CB
-//     uint32_t opcode_24 = (bytecode >> 24) & MASK_24;
-//     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
-//         if (opcode_table[i].opcode == opcode_24) {
-//             instr->opcode = opcode_table[i].opcode;
-//             instr->name = opcode_table[i].name;
-//             strcpy(instr->type, opcode_table[i].type);
-//             return;
-//         }
-//     }
-
-//     // type I
-//     uint32_t opcode_22 = (bytecode >> 22) & MASK_22;
-//     printf("opcode_22: %d\n", opcode_22);
-//     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
-//         if (opcode_table[i].opcode == opcode_22) {
-//             instr->opcode = opcode_table[i].opcode;
-//             instr->name = opcode_table[i].name;
-//             strcpy(instr->type, opcode_table[i].type);
-//             return;
-//         }
-//     }    
-// }
 
 void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
     
@@ -214,6 +170,7 @@ void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
 
     // Instrucciones tipo B (Opcode en bits [31:26], 6 bits)
     uint32_t opcode_26 = (bytecode >> 26) & 0x3F;
+    printf("Opcode 26: 0x%X\n", opcode_26);
     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
         if (opcode_table[i].opcode == opcode_26) {
             instr->opcode = opcode_table[i].opcode;
@@ -225,6 +182,7 @@ void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
 
     // Instrucciones tipo CB (Opcode en bits [31:24], 8 bits)
     uint32_t opcode_24 = (bytecode >> 24) & 0xFF;
+    printf("Opcode 24: 0x%X\n", opcode_24);
     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
         if (opcode_table[i].opcode == opcode_24) {
             instr->opcode = opcode_table[i].opcode;
@@ -239,12 +197,14 @@ void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
     printf("Opcode 22: 0x%X\n", opcode_22);
     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
         if (opcode_table[i].opcode == opcode_22) {
+            printf("Entro al opcode 22\n");
             instr->opcode = opcode_table[i].opcode;
             instr->name = opcode_table[i].name;
             strcpy(instr->type, opcode_table[i].type);
             return;
         }
-    }    
+    }
+    
 }
 
 
@@ -257,6 +217,12 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
         instr->alu_immediate = (bytecode >> 10) & 0xFFF;  // Bits [21:10] - Inmediato ALU
         instr->shamt = (bytecode >> 22) & 0x3;   // Bits [23:22] - Shift amount
         strcpy(instr->type, "G1");
+    } else if (strcmp(instr->type, "G2") == 0) {
+        instr->rd = bytecode & 0x1F;             // Bits [4:0] - Registro de destino
+        instr->rn = (bytecode >> 5) & 0x1F;      // Bits [9:5] - Registro fuente
+        instr->rm = (bytecode >> 16) & 0x1F;     // Bits [20:16] - Registro fuente 2
+        instr->shamt = (bytecode >> 22) & 0x3;   // Bits [23:22] - Shift amount
+        strcpy(instr->type, "G2");
     } else if (strcmp(instr->type, "G3") == 0) {
         instr->rd = bytecode & 0x1F;             // Bits [4:0] - Registro de destino
         instr->rn = (bytecode >> 5) & 0x1F;      // Bits [9:5] - Registro fuente
@@ -298,8 +264,7 @@ void implement_ADDS_immediate(instruction instruct) {
 }
 
 void implement_ADDS_extended_register(instruction instruct) {
-    printf("Implementing ADDS(extended register)\n");
-
+    printf("Implementing ADDS(Extended Register)\n");
     uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
     uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];  // Valor del registro rm
 
@@ -331,6 +296,46 @@ void implement_SUBS_immediate(instruction instruct) {
     printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
 }
 
+void implement_SUBS_extended_register(instruction instruct) {
+    printf("Implementing SUBS(Extended Register)\n");
+
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
+    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];  // Valor del registro rm
+
+    // Ejecutar la operación
+    uint64_t result = op1 - op2;
+    printf("op1: 0x%" PRIx64 ", op2: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, op2, result);
+    NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+
+    // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
+    NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
+    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
+    printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
+}
+
+void implement_HLT(instruction instruct) {
+    printf("Implementing HLT\n");
+    RUN_BIT = 0; // Terminar la ejecución
+}
+
+void implement_ANDS_shifted_register(instruction instruct) {
+    printf("Implementing ANDS(Shifted Register)\n");
+
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
+    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];  // Valor del registro rm
+
+    // Ejecutar la operación
+    uint64_t result = op1 & op2;
+    printf("op1: 0x%" PRIx64 ", op2: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, op2, result);
+    NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+
+    // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
+    NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
+    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
+    printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
+}
+
+
 
 
 
@@ -338,3 +343,4 @@ void implement_SUBS_immediate(instruction instruct) {
 
 // EN EL MANUAL MIRAR A64
     // pag 211
+
