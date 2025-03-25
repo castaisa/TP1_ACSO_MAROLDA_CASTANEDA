@@ -71,7 +71,7 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BLT"},
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BGE"},
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BLE"},
-    {0b11010011011, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "LSL(Immediate)"},
+    {0b11010011011, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G5", "LSL(Immediate)"}, //antes G1
     // {0b11010011010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LSR(Immediate)"},
     // // {11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STUR"},
     // {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STUR"},    // pg 236
@@ -237,6 +237,11 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
         instr->mov_immediate = (bytecode >> 5) & 0xFFFF;  // Bits [20:5] - Inmediato MOV
         instr->shamt = (bytecode >> 21) & 0x3;       // Bits [22:21] - Shift amount (hw)
         strcpy(instr->type, "G4");
+    } else if (strcmp(instr->type, "G5") == 0) {
+        instr->rd = bytecode & 0x1F;             // Bits [4:0] - Registro destino
+        instr->rn = (bytecode >> 5) & 0x1F;      // Bits [9:5] - Registro fuente
+        instr->shamt = (bytecode >> 10) & 0x3F;  // Bits [21:16] - Shift amount (máx. 63)
+        strcpy(instr->type, "G5");
     } else if (strcmp(instr->type, "G7") == 0) {
         instr->cond_br_address = (bytecode >> 5) & 0xFFFF;  // Bits [20:5] - Dirección de salto condicional
         strcpy(instr->type, "G7");
@@ -366,7 +371,7 @@ void implement_EOR_shifted_register(instruction instruct) {
     printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
     // ACA EST EL ERROR DE QUE SE ACTIVA Z CUANDO ES CO PERO EN EL SIMULADOR DE REF NO PASA ESO!! ALGO CON EL SHIFT
 }
-
+// HAY PROBLEMAS EN EOR
 void implement_MOVZ(instruction instruct) {
     printf("Implementing MOVZ\n");
 
@@ -382,6 +387,44 @@ void implement_MOVZ(instruction instruct) {
     NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
     printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
 }
+
+// void implement_LSL_immediate(instruction instruct) {
+//     printf("Implementing LSL(Immediate)\n");
+    
+//     uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
+//     uint64_t shift = instruct.shamt;                 // Shift amount
+//     // Ejecutar la operación
+//     uint64_t result = op1 << shift;
+//     printf("op1: 0x%" PRIx64 ", shift: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, shift, result);
+//     NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+    
+//     // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
+//     NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
+//     NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
+//     printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
+// }
+void implement_LSL_immediate(instruction instruct) {
+    printf("Implementing LSL(Immediate)\n");
+
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
+    uint64_t shift_amount = instruct.shamt & 0x3F;  // Asegurar que shift está en [0,63]
+
+    // Ejecutar la operación
+    uint64_t result = op1 << shift_amount;
+
+    // Guardar resultado en rd
+    NEXT_STATE.REGS[instruct.rd] = result;
+
+    // Actualizar FLAGS (solo N y Z)
+    NEXT_STATE.FLAG_N = (result >> 63) & 1;  // Flag N (bit 63 indica negativo)
+    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0;  // Flag Z (1 si resultado es 0)
+
+    // Debugging
+    printf("op1: 0x%" PRIx64 ", shift_amount: %lu, result: 0x%" PRIx64 "\n", op1, shift_amount, result);
+    printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
+}
+
+
 
 void implement_STURB(instruction instruct) {
     printf("Implementing STURB\n");
@@ -399,25 +442,8 @@ void implement_STURB(instruction instruct) {
     printf("Stored byte 0x%X at address 0x%" PRIx64 "\n", value, address);
 }
 
-void implement_LSL_immediate(instruction instruct) {
-    printf("Implementing LSL(Immediate)\n");
-
-    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
-    uint64_t shift = instruct.shamt;                 // Shift amount
-
-    // Ejecutar la operación
-    uint64_t result = op1 << shift;
-    printf("op1: 0x%" PRIx64 ", shift: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, shift, result);
-    NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
-
-    // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
-    NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
-    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
-    printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
-}
 
 
-
-
-    // pag 211
-
+//000000000000000
+// 0000000
+// pag 211
