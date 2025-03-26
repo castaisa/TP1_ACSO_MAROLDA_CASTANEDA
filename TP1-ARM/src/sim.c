@@ -86,7 +86,7 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     // {0b01111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STURH"},   // pg 235
     // // {11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDUR"},
     // {0b11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDUR"},    // pg 235
-    {0b11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDUR"},
+    {0b11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "LDUR"},
     // // {11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURH"},
     // {0b01111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LDURH"},   // pg 235
     // // {11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},
@@ -171,6 +171,7 @@ void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
     printf("Opcode 21: 0x%X\n", opcode_21);
     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
         if (opcode_table[i].opcode == opcode_21) {
+            printf("Entro al opcode 21\n");
             instr->opcode = opcode_table[i].opcode;
             instr->name = opcode_table[i].name;
             strcpy(instr->type, opcode_table[i].type);
