@@ -4,15 +4,17 @@
 #include "shell.h"
 
 #define OPCODE_TABLE_SIZE 50
-// #define MASK_21 0x7FF
-// #define MASK_26 0x3F
-// #define MASK_24 0x3F
-// #define MASK_22 0x7FF
+#define MASK_21 0x7FF
+#define MASK_26 0x3F
+#define MASK_24 0xFF
+#define MASK_22 0x3FF
 // #define MASK_21 0b00000111111111111  // 0x7FF  = 0000 0111 1111 1111 (11 bits en 1)
 //#define MASK_26 0b00111111          // 0x3F   = 0011 1111 (6 bits en 1)
 //#define MASK_24 0b00111111          // 0x3F   = 0011 1111 (6 bits en 1)
 //#define MASK_22 0b00000111111111111 // 0x7FF  = 0000 0111 1111 1111 (11 bits en 1)
 #define MASK_5bits 0x1F
+#define MASK_11bits 0xFFF
+#define MASK_16bits 0xFFFF
 
 typedef struct instruction_t{
     uint32_t opcode;
@@ -54,7 +56,6 @@ void implement_LDUR(instruction instruct);
 
 
 const instruction opcode_table[OPCODE_TABLE_SIZE] = {
-    // {0b10101011001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADDS(Extended Register)"},  // pg 257
     {0b1010101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ADDS(Extended Register)"},  // pg 257
     {0b10110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADDS(immediate)"}, 
     {0b1110101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "SUBS(Extended Register)"},
@@ -64,12 +65,11 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "CMP(immediate)"},
     // // {1111001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ANDS(Immediate)"}, // nose que pag
     {0b11101010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ANDS(Shifted Register)"},  //pg 256
-    // {11101011000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ANDS(Shifted Register)"},  //pg 256
     {0b11001010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "EOR(Shifter Register)"},
     // // {1011001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ORR(Shifted Register)"},
     // {0b101010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ORR(Shifted Register)"},
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G10", "B"},
-    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G9", "BR"},
+    // {0b11010110000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G9", "BR"},      // capitulo 6.2.29
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BEQ"},
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BNE"},
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BGT"},
@@ -80,13 +80,12 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     // {0b11010011010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LSR(Immediate)"},
     // // {11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STUR"},
     {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STUR"},    // pg 236
-    // // {11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURB"},
     {0b00111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURB"},   // pg 235
     // // {11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURH"},
     // {0b01111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STURH"},   // pg 235
     // // {11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDUR"},
     // {0b11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDUR"},    // pg 235
-    {0b11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "LDUR"},
+    {0b11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G14", "LDUR"},
     // // {11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURH"},
     // {0b01111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LDURH"},   // pg 235
     // // {11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},
@@ -97,7 +96,6 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "MUL"},
     // {0b10110100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G11", "CBZ"},
     // {0b10110101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G11", "CBNZ"},
-
     // {11010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUB(immediate)"},
     // {1001001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "AND(immediate)"},
 
@@ -150,7 +148,6 @@ void process_instruction()
     // if (instruct.name == "MUL") implement_MUL(instruct);
     // if (instruct.name == "CBZ") implement_CBZ(instruct);
     // if (instruct.name == "CBNZ") implement_CBNZ(instruct);
-    
 }
 
 instruction decode_instruction(uint32_t bytecode) {
@@ -167,7 +164,7 @@ instruction decode_instruction(uint32_t bytecode) {
 void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
     
     // Instrucciones tipo R, D, IW (Opcode en bits [31:21], 11 bits)
-    uint32_t opcode_21 = (bytecode >> 21) & 0x7FF;  
+    uint32_t opcode_21 = (bytecode >> 21) & MASK_21;  
     printf("Opcode 21: 0x%X\n", opcode_21);
     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
         if (opcode_table[i].opcode == opcode_21) {
@@ -180,7 +177,7 @@ void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
     }
 
     // Instrucciones tipo B (Opcode en bits [31:26], 6 bits)
-    uint32_t opcode_26 = (bytecode >> 26) & 0x3F;
+    uint32_t opcode_26 = (bytecode >> 26) & MASK_26;
     printf("Opcode 26: 0x%X\n", opcode_26);
     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
         if (opcode_table[i].opcode == opcode_26) {
@@ -192,7 +189,7 @@ void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
     }
 
     // Instrucciones tipo CB (Opcode en bits [31:24], 8 bits)
-    uint32_t opcode_24 = (bytecode >> 24) & 0xFF;
+    uint32_t opcode_24 = (bytecode >> 24) & MASK_24;
     printf("Opcode 24: 0x%X\n", opcode_24);
     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
         if (opcode_table[i].opcode == opcode_24) {
@@ -204,7 +201,7 @@ void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
     }
 
     // Instrucciones tipo I (Immediate) - Opcode en bits [31:22], 10 bits
-    uint32_t opcode_22 = (bytecode >> 22) & 0x3FF;  
+    uint32_t opcode_22 = (bytecode >> 22) & MASK_22;  
     printf("Opcode 22: 0x%X\n", opcode_22);
     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
         if (opcode_table[i].opcode == opcode_22) {
@@ -224,7 +221,7 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
      if (strcmp(instr->type, "G1") == 0) {
         instr->rd = bytecode & MASK_5bits;             // Bits [4:0] - Registro de destino
         instr->rn = (bytecode >> 5) & MASK_5bits;      // Bits [9:5] - Registro fuente
-        instr->alu_immediate = (bytecode >> 10) & 0xFFF;  // Bits [21:10] - Inmediato ALU
+        instr->alu_immediate = (bytecode >> 10) & MASK_11bits;  // Bits [21:10] - Inmediato ALU
         instr->shamt = (bytecode >> 22) & 0x3;   // Bits [23:22] - Shift amount
         strcpy(instr->type, "G1");
     } else if (strcmp(instr->type, "G2") == 0) {
@@ -236,12 +233,12 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
     } else if (strcmp(instr->type, "G3") == 0) {
         instr->rd = bytecode & MASK_5bits;             // Bits [4:0] - Registro de destino
         instr->rn = (bytecode >> 5) & MASK_5bits;      // Bits [9:5] - Registro fuente
-        instr->alu_immediate = (bytecode >> 10) & 0xFFF;  // Bits [21:10] - Inmediato ALU
+        instr->alu_immediate = (bytecode >> 10) & MASK_11bits;  // Bits [21:10] - Inmediato ALU
         instr->shamt = (bytecode >> 22) & 0x3;   // Bits [23:22] - Shift amount
         strcpy(instr->type, "G3");
     } else if (strcmp(instr->type, "G4") == 0) {
         instr->rd = bytecode & MASK_5bits;                 // Bits [4:0] - Registro de destino
-        instr->mov_immediate = (bytecode >> 5) & 0xFFFF;  // Bits [20:5] - Inmediato MOV
+        instr->mov_immediate = (bytecode >> 5) & MASK_16bits;  // Bits [20:5] - Inmediato MOV
         instr->shamt = (bytecode >> 21) & 0x3;       // Bits [22:21] - Shift amount (hw)
         strcpy(instr->type, "G4");
     } else if (strcmp(instr->type, "G5") == 0) {
@@ -251,7 +248,7 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
         instr->immr = (bytecode >> 16) & 0x3F;     // Bits [21:16] - imms
         strcpy(instr->type, "G5");
     } else if (strcmp(instr->type, "G7") == 0) {
-        instr->cond_br_address = (bytecode >> 5) & 0xFFFF;  // Bits [20:5] - Dirección de salto condicional
+        instr->cond_br_address = (bytecode >> 5) & MASK_16bits;  // Bits [20:5] - Dirección de salto condicional
         strcpy(instr->type, "G7");
     } else if (strcmp(instr->type, "G11") == 0) {
         instr->br_address = (bytecode >> 5) & 0x7FFFF;  // Bits [23:5] - Dirección de salto
@@ -262,6 +259,11 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
         instr->rn = (bytecode >> 5) & MASK_5bits;      // Bits [9:5] - Registro fuente
         instr->dt_address = (bytecode >> 12) & 0x1FF;   // Bits [20:12] - Dirección de datos
         strcpy(instr->type, "G13");
+    } else if (strcmp(instr->type, "G14") == 0) {
+        instr->rd = bytecode & MASK_5bits;             // Bits [4:0] - Registro de destino
+        instr->rn = (bytecode >> 5) & MASK_5bits;      // Bits [9:5] - Registro fuente
+        instr->dt_address = (bytecode >> 12) & 0x1FF;   // Bits [20:12] - Dirección de datos
+        strcpy(instr->type, "G14");
     }
 }
 
@@ -419,8 +421,14 @@ void implement_LSL_immediate(instruction instruct) {
 
 void implement_STUR(instruction instruct) {
     printf("Implementing STUR\n");
+    uint64_t signed_offset;
+    if (instruct.dt_address & (1 << 8)) {  // Verifica si el bit 8 (signo) está encendido
+        signed_offset = (uint64_t)(instruct.dt_address | 0xFFFFFFFFFFFFFF00);  // Extiende el signo
+    } else {
+        signed_offset = (uint64_t)(instruct.dt_address & 0x1FF);  // Mantiene los bits originales
+    }
 
-    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + instruct.dt_address;  // Calculate the address
+    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset;  // Calculate the address
     uint32_t value = CURRENT_STATE.REGS[instruct.rd] & 0xFFFFFFFF;  // Get the 32-bit value to store
 
     // Write the 32-bit value to memory
@@ -428,10 +436,19 @@ void implement_STUR(instruction instruct) {
     printf("Stored 0x%X at address 0x%" PRIx64 "\n", value, address);
 }
 
+
 void implement_STURB(instruction instruct) {
     printf("Implementing STURB\n");
 
-    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + instruct.dt_address;  // Calculate the address
+     uint64_t signed_offset;
+    if (instruct.dt_address & (1 << 8)) {  // Verifica si el bit 8 (signo) está encendido
+        signed_offset = (uint64_t)(instruct.dt_address | 0xFFFFFFFFFFFFFF00);  // Extiende el signo
+    } else {
+        signed_offset = (uint64_t)(instruct.dt_address & 0x1FF);  // Mantiene los bits originales
+    }
+
+    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset;  // Calculate the address
+
     uint8_t value = CURRENT_STATE.REGS[instruct.rd] & 0xFF;  // Get the byte value to store
 
     // Write the byte to memory (considering little-endian format)
@@ -446,26 +463,36 @@ void implement_STURB(instruction instruct) {
 
 void implement_LDUR(instruction instruct) {
     printf("Implementing LDUR\n");
+    // queremos pasar el dt adress de 9 bits a 64 bits, va a depender de si es positivo negativo
+    uint64_t signed_offset;
+    if (instruct.dt_address & (1 << 8)) {  // Verifica si el bit 8 (signo) está encendido
+        signed_offset = (uint64_t)(instruct.dt_address | 0xFFFFFFFFFFFFFF00);  // Extiende el signo
+    } else {
+        signed_offset = (uint64_t)(instruct.dt_address & 0x1FF);  // Mantiene los bits originales
+    }
 
-    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + instruct.dt_address;  // Calculate the address
+    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset;  // Calculate the address
 
     // Read the 32-bit value from memory
     uint32_t value = mem_read_32(address);
     printf("Loaded 0x%X from address 0x%" PRIx64 "\n", value, address);
 
-    // Sign-extend the 32-bit value to 64 bits
-    uint64_t sign_bit = (value >> 31) & 1;  // Get the sign bit
-    uint64_t sign_extension = (sign_bit == 1) ? 0xFFFFFFFF00000000 : 0;  // Generate the sign extension
-    uint64_t sign_extended_value = value | sign_extension;  // Perform the sign extension
+    
+    // Write the byte to memory (considering little-endian format)
+    uint32_t aligned_address = address & ~0x3;  // Align the address to 4 bytes
+    uint32_t aligned_value = mem_read_32(aligned_address);  // Read the aligned 32-bit value
+    uint32_t aligned_high = mem_read_32(aligned_address + 4);  // Read the high 32 bits of the aligned value
 
-    // Store the sign-extended value in rd
-    NEXT_STATE.REGS[instruct.rd] = sign_extended_value;
-    printf("Sign-extended 0x%X to 0x%" PRIx64 "\n", value, sign_extended_value);
+    uint64_t concatenado = (uint64_t)aligned_high << 32 | aligned_value;
+    // Guardar el valor en rd
+    NEXT_STATE.REGS[instruct.rd] = concatenado;
+    printf("Loaded 0x%" PRIx64 " into X%d\n", concatenado, instruct.rd);
 }
 
 
-//000000000000000
 // 0000000
 // 0000000
 // 0000000
 // pag 211
+
+// cap 6.2.29
