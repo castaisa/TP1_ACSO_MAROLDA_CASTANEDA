@@ -1,6 +1,7 @@
 
 Current register/bus values :
 -------------------------------------
+<<<<<<< HEAD
 Instruction Count : 1
 PC                : 0x400004
 Registers:
@@ -85,6 +86,10 @@ Current register/bus values :
 -------------------------------------
 Instruction Count : 3
 PC                : 0x40000c
+=======
+Instruction Count : 6
+PC                : 0x400018
+>>>>>>> 4bfcc9c4a106b890c3dcaf47a0b07446d0a72b52
 Registers:
 X0: 0x0
 X1: 0x10000000
@@ -99,6 +104,7 @@ X9: 0x0
 X10: 0x1234
 X11: 0x0
 X12: 0x0
+<<<<<<< HEAD
 X13: 0x0
 X14: 0x0
 X15: 0x0
@@ -182,6 +188,9 @@ X10: 0x1234
 X11: 0x0
 X12: 0x0
 X13: 0x0
+=======
+X13: 0x34
+>>>>>>> 4bfcc9c4a106b890c3dcaf47a0b07446d0a72b52
 X14: 0x0
 X15: 0x0
 X16: 0x0
