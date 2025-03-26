@@ -50,6 +50,8 @@ void implement_STURB(instruction instruct);
 void implement_LSL_immediate(instruction instruct);
 void implement_STUR(instruction instruct);
 void implement_LDUR(instruction instruct);
+void implement_LDURB(instruction instruct);
+void implement_CMP_extended_register(instruction instruct);
 // ()DRUTS_tnemel
 
 // void decode_instruction_with_opcode(instruction *instr);
@@ -61,7 +63,7 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     {0b1110101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "SUBS(Extended Register)"},
     {0b11110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUBS(immediate)"},
     {0b00000000000000000000011010100010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "HLT"},
-    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "CMP(Extended Register)"},
+    {0b11101011001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,"G2", "CMP(Extended Register)"},
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "CMP(immediate)"},
     // // {1111001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ANDS(Immediate)"}, // nose que pag
     {0b11101010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ANDS(Shifted Register)"},  //pg 256
@@ -88,8 +90,8 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     {0b11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G14", "LDUR"},
     // // {11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURH"},
     // {0b01111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LDURH"},   // pg 235
-    // // {11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},
-    // {0b00111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},   // pg 235
+    // // {0b11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},
+    {0b0011100001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},   // pg 235
     {0b11010010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G4", "MOVZ"},
     // {0b10000101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(Extended Register)"},
     // {0b10010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(immediate)"},
@@ -123,7 +125,7 @@ void process_instruction()
     if (strcmp(instruct.name, "SUBS(immediate)") == 0) implement_SUBS_immediate(instruct);
     if (strcmp(instruct.name, "SUBS(Extended Register)") == 0) implement_SUBS_extended_register(instruct);
     if (strcmp(instruct.name, "HLT") == 0) implement_HLT(instruct);
-    // if (instruct.name == "CMP") implement_CMP(instruct);
+    if (strcmp(instruct.name, "CMP(Extended Register)") == 0) implement_CMP_extended_register(instruct);
     if (strcmp(instruct.name, "ANDS(Shifted Register)") == 0) implement_ANDS_shifted_register(instruct);
     if (strcmp(instruct.name, "EOR(Shifter Register)") == 0 ) implement_EOR_shifted_register(instruct);
     // if (instruct.name == "ORR") implement_ORR(instruct);
@@ -141,7 +143,7 @@ void process_instruction()
     if (strcmp(instruct.name, "STURB") == 0) implement_STURB(instruct);
     // if (instruct.name == "STURH") implement_STURH(instruct);
     if (strcmp(instruct.name, "LDUR") == 0) implement_LDUR(instruct);
-    // if (instruct.name == "LDURB") implement_LDURB(instruct);
+    if (strcmp(instruct.name, "LDURB") == 0) implement_LDURB(instruct);
     // if (instruct.name == "LDURH") implement_LDURH(instruct);
     if (strcmp(instruct.name, "MOVZ") == 0) implement_MOVZ(instruct);
     // if (instruct.name == "ADD") implement_ADD(instruct);
@@ -181,6 +183,7 @@ void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
     printf("Opcode 26: 0x%X\n", opcode_26);
     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
         if (opcode_table[i].opcode == opcode_26) {
+            printf("Entro al opcode 26\n");
             instr->opcode = opcode_table[i].opcode;
             instr->name = opcode_table[i].name;
             strcpy(instr->type, opcode_table[i].type);
@@ -193,6 +196,7 @@ void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
     printf("Opcode 24: 0x%X\n", opcode_24);
     for (int i = 0; i < OPCODE_TABLE_SIZE; i++) {
         if (opcode_table[i].opcode == opcode_24) {
+            printf("Entro al opcode 24\n");
             instr->opcode = opcode_table[i].opcode;
             instr->name = opcode_table[i].name;
             strcpy(instr->type, opcode_table[i].type);
@@ -436,7 +440,6 @@ void implement_STUR(instruction instruct) {
     printf("Stored 0x%X at address 0x%" PRIx64 "\n", value, address);
 }
 
-
 void implement_STURB(instruction instruct) {
     printf("Implementing STURB\n");
 
@@ -489,6 +492,43 @@ void implement_LDUR(instruction instruct) {
     printf("Loaded 0x%" PRIx64 " into X%d\n", concatenado, instruct.rd);
 }
 
+void implement_LDURB(instruction instruct) {
+    printf("Implementing LDURB\n");
+
+    uint64_t signed_offset;
+    if (instruct.dt_address & (1 << 8)) {  // Verifica si el bit 8 (signo) está encendido
+        signed_offset = (uint64_t)(instruct.dt_address | 0xFFFFFFFFFFFFFF00);  // Extiende el signo
+    } else {
+        signed_offset = (uint64_t)(instruct.dt_address & 0x1FF);  // Mantiene los bits originales
+    }
+
+    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset;  // Calculate the address
+
+    // Read the byte from memory (considering little-endian format)
+    uint32_t aligned_address = address & ~0x3;  // Align the address to 4 bytes
+    uint32_t aligned_value = mem_read_32(aligned_address);  // Read the aligned 32-bit value
+    uint32_t byte_shift = (address & 0x3) * 8;  // Calculate the byte shift
+    uint8_t value = (aligned_value >> byte_shift) & 0xFF;  // Extract the byte value
+
+    // Guardar el valor en rd
+    NEXT_STATE.REGS[instruct.rd] = value;
+    printf("Loaded byte 0x%X into X%d\n", value, instruct.rd);
+}
+
+void implement_CMP_extended_register(instruction instruct) {
+    printf("Implementing CMP(Extended Register)\n");
+
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
+    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];  // Valor del registro rm
+
+    // Ejecutar la operación
+    uint64_t result = op1 - op2;
+    printf("op1: 0x%" PRIx64 ", op2: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, op2, result);
+
+    // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
+    NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
+    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
+}
 
 // 0000000
 // 0000000
