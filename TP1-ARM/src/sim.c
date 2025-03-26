@@ -391,21 +391,6 @@ void implement_MOVZ(instruction instruct) {
     printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
 }
 
-// void implement_LSL_immediate(instruction instruct) {
-//     printf("Implementing LSL(Immediate)\n");
-    
-//     uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
-//     uint64_t shift = instruct.shamt;                 // Shift amount
-//     // Ejecutar la operación
-//     uint64_t result = op1 << shift;
-//     printf("op1: 0x%" PRIx64 ", shift: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, shift, result);
-//     NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
-    
-//     // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
-//     NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
-//     NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
-//     printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
-// }
 void implement_LSL_immediate(instruction instruct) {
     printf("Implementing LSL(Immediate)\n");
 
