@@ -390,7 +390,6 @@ void implement_MOVZ(instruction instruct) {
     NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
     printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
 }
-
 void implement_LSL_immediate(instruction instruct) {
     printf("Implementing LSL(Immediate)\n");
 
