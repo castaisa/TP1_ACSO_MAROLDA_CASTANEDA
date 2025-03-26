@@ -12,6 +12,7 @@
 //#define MASK_26 0b00111111          // 0x3F   = 0011 1111 (6 bits en 1)
 //#define MASK_24 0b00111111          // 0x3F   = 0011 1111 (6 bits en 1)
 //#define MASK_22 0b00000111111111111 // 0x7FF  = 0000 0111 1111 1111 (11 bits en 1)
+#define MASK_5bits 0x1F
 
 typedef struct instruction_t{
     uint32_t opcode;
@@ -45,6 +46,8 @@ void implement_EOR_shifted_register(instruction instruct);
 void implement_MOVZ(instruction instruct);
 void implement_STURB(instruction instruct);
 void implement_LSL_immediate(instruction instruct);
+void implement_STUR(instruction instruct);
+void implement_LDUR(instruction instruct);
 // ()DRUTS_tnemel
 
 // void decode_instruction_with_opcode(instruction *instr);
@@ -76,13 +79,14 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     {0b11010011011, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G5", "LSL(Immediate)"}, //antes G1
     // {0b11010011010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LSR(Immediate)"},
     // // {11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STUR"},
-    // {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STUR"},    // pg 236
+    {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STUR"},    // pg 236
     // // {11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURB"},
     {0b00111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURB"},   // pg 235
     // // {11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURH"},
     // {0b01111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STURH"},   // pg 235
     // // {11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDUR"},
-    // {0b11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LDUR"},    // pg 235
+    // {0b11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDUR"},    // pg 235
+    {0b11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDUR"},
     // // {11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURH"},
     // {0b01111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LDURH"},   // pg 235
     // // {11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},
@@ -135,10 +139,10 @@ void process_instruction()
     // if (instruct.name == "BLE") implement_BLE(instruct);
     if (strcmp(instruct.name, "LSL(Immediate)") == 0) implement_LSL_immediate(instruct);
     // if (instruct.name == "LSR") implement_LSR(instruct);
-    // if (instruct.name == "STUR") implement_STUR(instruct);
+    if (strcmp(instruct.name, "STUR") == 0) implement_STUR(instruct);
     if (strcmp(instruct.name, "STURB") == 0) implement_STURB(instruct);
     // if (instruct.name == "STURH") implement_STURH(instruct);
-    // if (instruct.name == "LDUR") implement_LDUR(instruct);
+    if (strcmp(instruct.name, "LDUR") == 0) implement_LDUR(instruct);
     // if (instruct.name == "LDURB") implement_LDURB(instruct);
     // if (instruct.name == "LDURH") implement_LDURH(instruct);
     if (strcmp(instruct.name, "MOVZ") == 0) implement_MOVZ(instruct);
@@ -217,31 +221,31 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
     // falta completar el resto de la instruccion con el opcode
     // Completar el resto de la instrucción con el opcode
      if (strcmp(instr->type, "G1") == 0) {
-        instr->rd = bytecode & 0x1F;             // Bits [4:0] - Registro de destino
-        instr->rn = (bytecode >> 5) & 0x1F;      // Bits [9:5] - Registro fuente
+        instr->rd = bytecode & MASK_5bits;             // Bits [4:0] - Registro de destino
+        instr->rn = (bytecode >> 5) & MASK_5bits;      // Bits [9:5] - Registro fuente
         instr->alu_immediate = (bytecode >> 10) & 0xFFF;  // Bits [21:10] - Inmediato ALU
         instr->shamt = (bytecode >> 22) & 0x3;   // Bits [23:22] - Shift amount
         strcpy(instr->type, "G1");
     } else if (strcmp(instr->type, "G2") == 0) {
-        instr->rd = bytecode & 0x1F;             // Bits [4:0] - Registro de destino
-        instr->rn = (bytecode >> 5) & 0x1F;      // Bits [9:5] - Registro fuente
-        instr->rm = (bytecode >> 16) & 0x1F;     // Bits [20:16] - Registro fuente 2
+        instr->rd = bytecode & MASK_5bits;             // Bits [4:0] - Registro de destino
+        instr->rn = (bytecode >> 5) & MASK_5bits;      // Bits [9:5] - Registro fuente
+        instr->rm = (bytecode >> 16) & MASK_5bits;     // Bits [20:16] - Registro fuente 2
         instr->shamt = (bytecode >> 22) & 0x3;   // Bits [23:22] - Shift amount
         strcpy(instr->type, "G2");
     } else if (strcmp(instr->type, "G3") == 0) {
-        instr->rd = bytecode & 0x1F;             // Bits [4:0] - Registro de destino
-        instr->rn = (bytecode >> 5) & 0x1F;      // Bits [9:5] - Registro fuente
+        instr->rd = bytecode & MASK_5bits;             // Bits [4:0] - Registro de destino
+        instr->rn = (bytecode >> 5) & MASK_5bits;      // Bits [9:5] - Registro fuente
         instr->alu_immediate = (bytecode >> 10) & 0xFFF;  // Bits [21:10] - Inmediato ALU
         instr->shamt = (bytecode >> 22) & 0x3;   // Bits [23:22] - Shift amount
         strcpy(instr->type, "G3");
     } else if (strcmp(instr->type, "G4") == 0) {
-        instr->rd = bytecode & 0x1F;                 // Bits [4:0] - Registro de destino
+        instr->rd = bytecode & MASK_5bits;                 // Bits [4:0] - Registro de destino
         instr->mov_immediate = (bytecode >> 5) & 0xFFFF;  // Bits [20:5] - Inmediato MOV
         instr->shamt = (bytecode >> 21) & 0x3;       // Bits [22:21] - Shift amount (hw)
         strcpy(instr->type, "G4");
     } else if (strcmp(instr->type, "G5") == 0) {
-        instr->rd = bytecode & 0x1F;               // Bits [4:0] - Registro destino
-        instr->rn = (bytecode >> 5) & 0x1F;        // Bits [9:5] - Registro fuente
+        instr->rd = bytecode & MASK_5bits;               // Bits [4:0] - Registro destino
+        instr->rn = (bytecode >> 5) & MASK_5bits;        // Bits [9:5] - Registro fuente
         instr->imms = (bytecode >> 10) & 0x3F;     // Bits [15:10] - immr
         instr->immr = (bytecode >> 16) & 0x3F;     // Bits [21:16] - imms
         strcpy(instr->type, "G5");
@@ -250,12 +254,12 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
         strcpy(instr->type, "G7");
     } else if (strcmp(instr->type, "G11") == 0) {
         instr->br_address = (bytecode >> 5) & 0x7FFFF;  // Bits [23:5] - Dirección de salto
-        instr->rn = bytecode & 0x1F;                    // Bits [4:0] - Registro fuente
+        instr->rn = bytecode & MASK_5bits;                    // Bits [4:0] - Registro fuente
         strcpy(instr->type, "G11");
     } else if (strcmp(instr->type, "G13") == 0) {
-        instr->rd = bytecode & 0x1F;             // Bits [4:0] - Registro de destino
-        instr->rn = (bytecode >> 5) & 0x1F;      // Bits [9:5] - Registro fuente
-        instr->dt_address = (bytecode >> 10) & 0x1FF;  // Bits [18:10] - Dirección de datos
+        instr->rd = bytecode & MASK_5bits;             // Bits [4:0] - Registro de destino
+        instr->rn = (bytecode >> 5) & MASK_5bits;      // Bits [9:5] - Registro fuente
+        instr->dt_address = (bytecode >> 12) & 0x1FF;   // Bits [20:12] - Dirección de datos
         strcpy(instr->type, "G13");
     }
 }
@@ -390,6 +394,7 @@ void implement_MOVZ(instruction instruct) {
     NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
     printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
 }
+
 void implement_LSL_immediate(instruction instruct) {
     printf("Implementing LSL(Immediate)\n");
 
@@ -411,7 +416,16 @@ void implement_LSL_immediate(instruction instruct) {
     printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
 }
 
+void implement_STUR(instruction instruct) {
+    printf("Implementing STUR\n");
 
+    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + instruct.dt_address;  // Calculate the address
+    uint32_t value = CURRENT_STATE.REGS[instruct.rd] & 0xFFFFFFFF;  // Get the 32-bit value to store
+
+    // Write the 32-bit value to memory
+    mem_write_32(address, value);
+    printf("Stored 0x%X at address 0x%" PRIx64 "\n", value, address);
+}
 
 void implement_STURB(instruction instruct) {
     printf("Implementing STURB\n");
@@ -429,6 +443,24 @@ void implement_STURB(instruction instruct) {
     printf("Stored byte 0x%X at address 0x%" PRIx64 "\n", value, address);
 }
 
+void implement_LDUR(instruction instruct) {
+    printf("Implementing LDUR\n");
+
+    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + instruct.dt_address;  // Calculate the address
+
+    // Read the 32-bit value from memory
+    uint32_t value = mem_read_32(address);
+    printf("Loaded 0x%X from address 0x%" PRIx64 "\n", value, address);
+
+    // Sign-extend the 32-bit value to 64 bits
+    uint64_t sign_bit = (value >> 31) & 1;  // Get the sign bit
+    uint64_t sign_extension = (sign_bit == 1) ? 0xFFFFFFFF00000000 : 0;  // Generate the sign extension
+    uint64_t sign_extended_value = value | sign_extension;  // Perform the sign extension
+
+    // Store the sign-extended value in rd
+    NEXT_STATE.REGS[instruct.rd] = sign_extended_value;
+    printf("Sign-extended 0x%X to 0x%" PRIx64 "\n", value, sign_extended_value);
+}
 
 
 //000000000000000
