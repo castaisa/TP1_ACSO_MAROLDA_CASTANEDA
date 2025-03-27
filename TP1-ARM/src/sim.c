@@ -56,6 +56,7 @@ void implement_LDURB(instruction instruct);
 void implement_CMP_extended_register(instruction instruct);
 void implement_BCOND(instruction instruct);
 void implement_ORR_shifted_register(instruction instruct);
+void implement_STURH(instruction instruct);
 // ()DRUTS_tnemel
 
 // void decode_instruction_with_opcode(instruction *instr);
@@ -71,7 +72,6 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "CMP(immediate)"},
     {0b11101010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ANDS(Shifted Register)"},  //pg 256
     {0b11001010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "EOR(Shifter Register)"},
-    // // {1011001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ORR(Shifted Register)"},
     {0b10101010000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ORR(Shifted Register)"},
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G10", "B"},
     // {0b11010110000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G9", "BR"},      // capitulo 6.2.29
@@ -80,10 +80,10 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     // {0b11010011010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LSR(Immediate)"},
     {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STUR"},    // pg 236
     {0b00111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURB"},   // pg 235
-    // // {11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURH"},
-    // {0b01111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STURH"},   // pg 235
+    // {0b11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURH"},
+    {0b01111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURH"},   // pg 235
     {0b11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G14", "LDUR"},
-    // // {11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURH"},
+    // // {11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURH"},
     // {0b01111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LDURH"},   // pg 235
     {0b0011100001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},   // pg 235
     {0b11010010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G4", "MOVZ"},
@@ -129,7 +129,7 @@ void process_instruction()
     // if (instruct.name == "LSR") implement_LSR(instruct);
     if (strcmp(instruct.name, "STUR") == 0) implement_STUR(instruct);
     if (strcmp(instruct.name, "STURB") == 0) implement_STURB(instruct);
-    // if (instruct.name == "STURH") implement_STURH(instruct);
+    if (instruct.name == "STURH") implement_STURH(instruct);
     if (strcmp(instruct.name, "LDUR") == 0) implement_LDUR(instruct);
     if (strcmp(instruct.name, "LDURB") == 0) implement_LDURB(instruct);
     // if (instruct.name == "LDURH") implement_LDURH(instruct);
@@ -508,9 +508,9 @@ void implement_EOR_shifted_register(instruction instruct) {
     printf("op1: 0x%" PRIx64 ", op2: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, op2, result);
     NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
 
-    // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
-    NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
-    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
+    // NO ACTUALIZA FLAGS POR AHORA
+    // NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
+    // NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
     printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
 }
 
@@ -572,18 +572,52 @@ void implement_ORR_shifted_register(instruction instruct) {
     printf("op1: 0x%" PRIx64 ", op2: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, op2, result);
     NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
 
-    // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
-    NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
-    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
+    // NO ACTUALIZA FLAGS POR AHORA
+    // NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
+    // NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
     printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
 }
 
-// 0000000
-// pag 211
+void implement_STURH(instruction instruct) {
+    printf("Implementing STURH\n");
 
-// cap 6.2.29
+    uint64_t signed_offset;
+    if (instruct.dt_address & (1 << 8)) {  // Verifica si el bit 8 (signo) está encendido
+        signed_offset = (uint64_t)(instruct.dt_address | 0xFFFFFFFFFFFFFF00);  // Extiende el signo
+    } else {
+        signed_offset = (uint64_t)(instruct.dt_address & 0x1FF);  // Mantiene los bits originales
+    }
 
-// z = 1
-// z = 1
-// z = 0,  x2 = 0xa
-// igual, HLT
+    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset;  // Calculate the address
+    uint16_t value = CURRENT_STATE.REGS[instruct.rd] & 0xFFFF;  // Get the 16-bit value to store
+
+    // Write the 16-bit value to memory using 32-bit aligned access
+    uint32_t aligned_address = address & ~0x3;  // Align the address to 4 bytes
+    uint32_t aligned_value = mem_read_32(aligned_address);  // Read the aligned 32-bit value
+    uint32_t halfword_shift = (address & 0x2) * 8;  // Calculate the halfword shift
+    aligned_value = (aligned_value & ~(0xFFFF << halfword_shift)) | (value << halfword_shift);  // Insert the halfword
+    mem_write_32(aligned_address, aligned_value);  // Write the modified 32-bit value back to memory
+
+    printf("Stored 0x%X at address 0x%" PRIx64 "\n", value, address);
+}
+
+
+
+// bcond results
+// subs Z = 1
+// bne nada
+// adds Z = 0, X2 = a
+// subs N = 1, X31 = 0xfffffffffffffff6
+// bne nada
+// adds N = 0, X4 = 0x5
+// subs x5 = 0x2
+// subs x31 = 0x3
+// bgt nada
+// bgt nada
+// bgt nada
+//
+
+
+// X0: 0x0
+// X1: 0x10000000
+// X2: 0x1234
