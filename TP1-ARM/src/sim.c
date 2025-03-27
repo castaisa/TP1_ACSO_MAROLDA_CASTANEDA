@@ -15,12 +15,14 @@
 #define MASK_5bits 0x1F
 #define MASK_11bits 0xFFF
 #define MASK_16bits 0xFFFF
+#define MASK_19bits 0x7FFFF
 
 typedef struct instruction_t{
     uint32_t opcode;
     uint32_t rd;
     uint32_t rn;
     uint32_t rm;
+    uint32_t rt;
     uint32_t shamt;
     uint32_t alu_immediate;
     uint32_t dt_address;
@@ -52,43 +54,39 @@ void implement_STUR(instruction instruct);
 void implement_LDUR(instruction instruct);
 void implement_LDURB(instruction instruct);
 void implement_CMP_extended_register(instruction instruct);
+void implement_BCOND(instruction instruct);
+void implement_ORR_shifted_register(instruction instruct);
 // ()DRUTS_tnemel
 
 // void decode_instruction_with_opcode(instruction *instr);
 
 
 const instruction opcode_table[OPCODE_TABLE_SIZE] = {
-    {0b1010101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ADDS(Extended Register)"},  // pg 257
-    {0b10110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADDS(immediate)"}, 
-    {0b1110101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "SUBS(Extended Register)"},
-    {0b11110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUBS(immediate)"},
-    {0b00000000000000000000011010100010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "HLT"},
-    {0b11101011001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,"G2", "CMP(Extended Register)"},    // NO ESTA COMPROBADO
+    {0b1010101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ADDS(Extended Register)"},  // pg 257
+    {0b10110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADDS(immediate)"}, 
+    {0b1110101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "SUBS(Extended Register)"},
+    {0b11110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUBS(immediate)"},
+    {0b00000000000000000000011010100010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "HLT"},
+    {0b11101011001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,"G2", "CMP(Extended Register)"},    // NO ESTA COMPROBADO
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "CMP(immediate)"},
-    // // {1111001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ANDS(Immediate)"}, // nose que pag
-    {0b11101010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ANDS(Shifted Register)"},  //pg 256
-    {0b11001010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "EOR(Shifter Register)"},
+    {0b11101010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ANDS(Shifted Register)"},  //pg 256
+    {0b11001010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "EOR(Shifter Register)"},
     // // {1011001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ORR(Shifted Register)"},
-    // {0b101010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ORR(Shifted Register)"},
+    {0b10101010000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ORR(Shifted Register)"},
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G10", "B"},
     // {0b11010110000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G9", "BR"},      // capitulo 6.2.29
-    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BEQ"},
-    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BNE"},
-    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BGT"},
-    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BLT"},
-    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BGE"},
-    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BLE"},
-    {0b11010011011, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G5", "LSL(Immediate)"}, //antes G1
+    {0b01010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "BCOND"},    // falta probar BNE, BGT, BGE, BLE
+    {0b11010011011, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G5", "LSL(Immediate)"}, //antes G1
     // {0b11010011010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LSR(Immediate)"},
-    {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STUR"},    // pg 236
-    {0b00111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURB"},   // pg 235
+    {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STUR"},    // pg 236
+    {0b00111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURB"},   // pg 235
     // // {11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURH"},
     // {0b01111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STURH"},   // pg 235
-    {0b11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G14", "LDUR"},
+    {0b11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G14", "LDUR"},
     // // {11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURH"},
     // {0b01111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LDURH"},   // pg 235
-    {0b0011100001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},   // pg 235
-    {0b11010010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G4", "MOVZ"},
+    {0b0011100001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},   // pg 235
+    {0b11010010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G4", "MOVZ"},
     // {0b10000101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(Extended Register)"},
     // {0b10010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(immediate)"},
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "MUL"},
@@ -123,15 +121,10 @@ void process_instruction()
     if (strcmp(instruct.name, "CMP(Extended Register)") == 0) implement_CMP_extended_register(instruct);
     if (strcmp(instruct.name, "ANDS(Shifted Register)") == 0) implement_ANDS_shifted_register(instruct);
     if (strcmp(instruct.name, "EOR(Shifter Register)") == 0 ) implement_EOR_shifted_register(instruct);
-    // if (instruct.name == "ORR") implement_ORR(instruct);
+    if (strcmp(instruct.name, "ORR(Shifted Register)") == 0) implement_ORR_shifted_register(instruct);
     // if (instruct.name == "B") implement_B(instruct);
+    if (strcmp(instruct.name, "BCOND") == 0) implement_BCOND(instruct);
     // if (instruct.name == "BR") implement_BR(instruct);
-    // if (instruct.name == "BEQ") implement_BEQ(instruct);
-    // if (instruct.name == "BNE") implement_BNE(instruct);
-    // if (instruct.name == "BGT") implement_BGT(instruct);
-    // if (instruct.name == "BLT") implement_BLT(instruct);
-    // if (instruct.name == "BGE") implement_BGE(instruct);
-    // if (instruct.name == "BLE") implement_BLE(instruct);
     if (strcmp(instruct.name, "LSL(Immediate)") == 0) implement_LSL_immediate(instruct);
     // if (instruct.name == "LSR") implement_LSR(instruct);
     if (strcmp(instruct.name, "STUR") == 0) implement_STUR(instruct);
@@ -247,7 +240,8 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
         instr->immr = (bytecode >> 16) & 0x3F;     // Bits [21:16] - imms
         strcpy(instr->type, "G5");
     } else if (strcmp(instr->type, "G7") == 0) {
-        instr->cond_br_address = (bytecode >> 5) & MASK_16bits;  // Bits [20:5] - Dirección de salto condicional
+        instr->cond_br_address = (bytecode >> 5) & MASK_19bits;     // Bits [23:5] - Dirección de salto condicional
+        instr->rt = (bytecode) & MASK_5bits;  // Bits [5:0] - Dirección de salto condicional
         strcpy(instr->type, "G7");
     } else if (strcmp(instr->type, "G11") == 0) {
         instr->br_address = (bytecode >> 5) & 0x7FFFF;  // Bits [23:5] - Dirección de salto
@@ -507,6 +501,8 @@ void implement_EOR_shifted_register(instruction instruct) {
     uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
     uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];  // Valor del registro rm
 
+
+    printf("op1: 0x%" PRIx64 ", op2: 0x%" PRIx64 "\n", op1, op2);
     // Ejecutar la operación
     uint64_t result = op1 ^ op2;
     printf("op1: 0x%" PRIx64 ", op2: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, op2, result);
@@ -518,8 +514,70 @@ void implement_EOR_shifted_register(instruction instruct) {
     printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
 }
 
-// 0000000
-// 0000000
+void implement_BCOND(instruction instruct) {
+    printf("Implementing BCOND\n");
+
+    // Verificar la condición
+    int cond = instruct.rt;
+    int branch = 0;
+    switch (cond) {
+        case 0b0000:  // BEQ
+            printf("BEQ\n");
+            branch = CURRENT_STATE.FLAG_Z;
+            break;
+        case 0b0001:  // BNE
+            printf("BNE\n");
+            branch = !CURRENT_STATE.FLAG_Z;
+            break;
+        case 0b1100:  // BGT
+            printf("BGT\n");
+            branch = !CURRENT_STATE.FLAG_Z && !CURRENT_STATE.FLAG_N;
+            break;
+        case 0b1011:  // BLT
+            printf("BLT\n");
+            branch = CURRENT_STATE.FLAG_N;
+            break;
+        case 0b1010:  // BGE
+            printf("BGE\n");
+            branch = !CURRENT_STATE.FLAG_N;
+            break;
+        case 0b1101:  // BLE
+            printf("BLE\n");
+            branch = CURRENT_STATE.FLAG_Z || CURRENT_STATE.FLAG_N;
+            break;
+    }
+
+    // Realizar el salto si la condición se cumple
+    if (branch) {
+        int64_t signed_offset;
+        if (instruct.cond_br_address & (1 << 18)) {  // Verifica si el bit 18 (signo) está encendido
+            signed_offset = (int64_t)(instruct.cond_br_address | 0xFFFFFFFFFFFC0000);  // Extiende el signo
+        } else {
+            signed_offset = (int64_t)(instruct.cond_br_address & 0x3FFFF);  // Mantiene los bits originales
+        }
+
+        NEXT_STATE.PC = CURRENT_STATE.PC + (signed_offset << 2);  // Actualizar el PC
+        printf("Branching to 0x%" PRIx64 "\n", NEXT_STATE.PC);
+    }
+}
+
+void implement_ORR_shifted_register(instruction instruct) {
+    printf("Implementing ORR(Shifter Register)\n");
+
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
+    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];  // Valor del registro rm
+
+    // Ejecutar la operación
+    uint64_t result = op1 | op2;
+    printf("op1: 0x%" PRIx64 ", op2: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, op2, result);
+    NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+
+    // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
+    NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
+    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
+    printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
+}
+
 // 0000000
 // pag 211
 
@@ -527,7 +585,5 @@ void implement_EOR_shifted_register(instruction instruct) {
 
 // z = 1
 // z = 1
-// z = 1
-// z = 1
-// z = 1
-// HALT
+// z = 0,  x2 = 0xa
+// igual, HLT

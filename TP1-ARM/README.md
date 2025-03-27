@@ -39,7 +39,7 @@ Ahora deberías tener un archivo ejecutable llamado "sim".
 2. Usa "asm2hex" para convertir las entradas de prueba ("*.s") en hexdumps del código de máquina ensamblado ("*.x").
 
           cd inputs/
-          ./asm2hex addis.s
+          python3 asm2hex_3 addis.s
 
 Ahora deberías tener un hexdump del código de máquina ensamblado "addis.x". Repite este paso para el resto de las entradas de prueba.
 
