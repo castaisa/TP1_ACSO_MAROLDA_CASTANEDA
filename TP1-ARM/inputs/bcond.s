@@ -10,7 +10,7 @@ bar_bgt:
 adds X4, X0, 5
 subs X5, X2, 8
 cmp X4, X5
-bgt rancho_bge
+bgt rancho_ble
 HLT 0
 
 fool:

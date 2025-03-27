@@ -57,7 +57,9 @@ void implement_CMP_extended_register(instruction instruct);
 void implement_BCOND(instruction instruct);
 void implement_ORR_shifted_register(instruction instruct);
 void implement_STURH(instruction instruct);
-// ()DRUTS_tnemel
+void implement_LDURH(instruction instruct);
+void implement_AND_inmediate(instruction instruct);
+void implement_SUB_inmediate(instruction instruct);
 
 // void decode_instruction_with_opcode(instruction *instr);
 
@@ -80,20 +82,18 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     // {0b11010011010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LSR(Immediate)"},
     {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STUR"},    // pg 236
     {0b00111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURB"},   // pg 235
-    // {0b11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURH"},
-    {0b01111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURH"},   // pg 235
+    {0b0111100000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURH"},   // pg 235
     {0b11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G14", "LDUR"},
-    // // {11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURH"},
-    // {0b01111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LDURH"},   // pg 235
+    {0b01111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURH"},   // pg 235
     {0b0011100001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},   // pg 235
     {0b11010010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G4", "MOVZ"},
     // {0b10000101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(Extended Register)"},
     // {0b10010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(immediate)"},
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "MUL"},
-    // {0b10110100, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G11", "CBZ"},
-    // {0b10110101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G11", "CBNZ"},
-    // {11010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUB(immediate)"},
-    // {1001001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "AND(immediate)"},
+    {0b10110100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G11", "CBZ"},
+    {0b10110101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G11", "CBNZ"},
+    {11010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUB(immediate)"},
+    {1001001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "AND(immediate)"},
 };
 
 
@@ -132,7 +132,7 @@ void process_instruction()
     if (instruct.name == "STURH") implement_STURH(instruct);
     if (strcmp(instruct.name, "LDUR") == 0) implement_LDUR(instruct);
     if (strcmp(instruct.name, "LDURB") == 0) implement_LDURB(instruct);
-    // if (instruct.name == "LDURH") implement_LDURH(instruct);
+    if (instruct.name == "LDURH") implement_LDURH(instruct);
     if (strcmp(instruct.name, "MOVZ") == 0) implement_MOVZ(instruct);
     // if (instruct.name == "ADD") implement_ADD(instruct);
     // if (instruct.name == "MUL") implement_MUL(instruct);
@@ -588,34 +588,65 @@ void implement_STURH(instruction instruct) {
         signed_offset = (uint64_t)(instruct.dt_address & 0x1FF);  // Mantiene los bits originales
     }
 
-    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset;  // Calculate the address
-    uint16_t value = CURRENT_STATE.REGS[instruct.rd] & 0xFFFF;  // Get the 16-bit value to store
+    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset;  // Calcula la dirección
+    uint16_t value = CURRENT_STATE.REGS[instruct.rd] & 0xFFFF;  // Extrae los 16 bits menos significativos de Rd
 
-    // Write the 16-bit value to memory using 32-bit aligned access
-    uint32_t aligned_address = address & ~0x3;  // Align the address to 4 bytes
-    uint32_t aligned_value = mem_read_32(aligned_address);  // Read the aligned 32-bit value
-    uint32_t halfword_shift = (address & 0x2) * 8;  // Calculate the halfword shift
-    aligned_value = (aligned_value & ~(0xFFFF << halfword_shift)) | (value << halfword_shift);  // Insert the halfword
-    mem_write_32(aligned_address, aligned_value);  // Write the modified 32-bit value back to memory
+    // Acceso alineado a 32 bits
+    uint32_t aligned_address = address & ~0x3;  // Alinea la dirección a 4 bytes
+    uint32_t aligned_value = mem_read_32(aligned_address);  // Lee el valor de 32 bits en esa dirección
+    uint32_t halfword_shift = (address & 0x2) * 8;  // Determina el desplazamiento dentro de los 32 bits
+
+    // Modifica solo los 16 bits correspondientes
+    aligned_value = (aligned_value & ~(0xFFFF << halfword_shift)) | (value << halfword_shift);
+    mem_write_32(aligned_address, aligned_value);  // Escribe el valor modificado de vuelta a memoria
 
     printf("Stored 0x%X at address 0x%" PRIx64 "\n", value, address);
 }
 
+void implement_LDURH(instruction instruct) {
+    printf("Implementing LDURH\n");
+
+    uint64_t signed_offset;
+    if (instruct.dt_address & (1 << 8)) {  // Verifica si el bit 8 (signo) está encendido
+        signed_offset = (uint64_t)(instruct.dt_address | 0xFFFFFFFFFFFFFF00);  // Extiende el signo
+    } else {
+        signed_offset = (uint64_t)(instruct.dt_address & 0x1FF);  // Mantiene los bits originales
+    }
+
+    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset;  // Calcula la dirección
+
+    // Acceso alineado a 32 bits
+    uint32_t aligned_address = address & ~0x3;  // Alinea la dirección a 4 bytes
+    uint32_t aligned_value = mem_read_32(aligned_address);  // Lee los 32 bits en esa dirección
+    uint32_t halfword_shift = (address & 0x2) * 8;  // Determina el desplazamiento dentro de los 32 bits
+
+    // Extrae los 16 bits correspondientes
+    uint16_t loaded_value = (aligned_value >> halfword_shift) & 0xFFFF;
+    CURRENT_STATE.REGS[instruct.rd] = loaded_value;  // Almacena en el registro de destino
+
+    printf("Loaded 0x%X from address 0x%" PRIx64 "\n", loaded_value, address);
+}
 
 
 // bcond results
-// subs Z = 1
+// SUBS Z = 1, 
 // bne nada
-// adds Z = 0, X2 = a
-// subs N = 1, X31 = 0xfffffffffffffff6
+// adds x2 = 0xa
+// subs, 0xfffffffffffffff6, N=1
 // bne nada
-// adds N = 0, X4 = 0x5
+// adds  N = 0, X4 = 0x5
 // subs x5 = 0x2
 // subs x31 = 0x3
 // bgt nada
-// bgt nada
-// bgt nada
-//
+// adds x7 = 0xa
+// subs x31 = 0x0
+// ble nada
+// adds x8 = 0x8
+// subs x31 = 0x6
+// bge nada
+// adds x10 = 0xa
+// HLT
+
 
 
 // X0: 0x0
