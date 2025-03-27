@@ -63,7 +63,7 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     {0b1110101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "SUBS(Extended Register)"},
     {0b11110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUBS(immediate)"},
     {0b00000000000000000000011010100010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "HLT"},
-    {0b11101011001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,"G2", "CMP(Extended Register)"},
+    {0b11101011001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,"G2", "CMP(Extended Register)"},    // NO ESTA COMPROBADO
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "CMP(immediate)"},
     // // {1111001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G3", "ANDS(Immediate)"}, // nose que pag
     {0b11101010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ANDS(Shifted Register)"},  //pg 256
@@ -80,17 +80,13 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "BLE"},
     {0b11010011011, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G5", "LSL(Immediate)"}, //antes G1
     // {0b11010011010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LSR(Immediate)"},
-    // // {11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STUR"},
     {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STUR"},    // pg 236
     {0b00111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURB"},   // pg 235
     // // {11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURH"},
     // {0b01111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "STURH"},   // pg 235
-    // // {11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDUR"},
-    // {0b11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDUR"},    // pg 235
     {0b11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G14", "LDUR"},
     // // {11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURH"},
     // {0b01111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LDURH"},   // pg 235
-    // // {0b11111000001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},
     {0b0011100001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},   // pg 235
     {0b11010010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G4", "MOVZ"},
     // {0b10000101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(Extended Register)"},
@@ -100,7 +96,6 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     // {0b10110101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G11", "CBNZ"},
     // {11010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUB(immediate)"},
     // {1001001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "AND(immediate)"},
-
 };
 
 
@@ -362,30 +357,6 @@ void implement_ANDS_shifted_register(instruction instruct) {
     printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
 }
 
-void implement_EOR_shifted_register(instruction instruct) {
-    
-    //   En el opcode se considerar que shift y N son siempre ceros, por lo que se chequean los bits
-    //     <31:21>
-    //     No se tiene que implementar el shift
-    printf("Implementing EOR(Shifted Register)\n");
-
-    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
-    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];  // Valor del registro rm
-
-    // Ejecutar la operación XOR
-    uint64_t result = op1 ^ op2;
-    printf("op1: 0x%" PRIx64 ", op2: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, op2, result);
-
-    NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
-
-    // Actualizar FLAGS (solo N y Z)
-    NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
-    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
-
-    printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
-    // ACA EST EL ERROR DE QUE SE ACTIVA Z CUANDO ES CO PERO EN EL SIMULADOR DE REF NO PASA ESO!! ALGO CON EL SHIFT
-}
-// HAY PROBLEMAS EN EOR
 void implement_MOVZ(instruction instruct) {
     printf("Implementing MOVZ\n");
 
@@ -530,9 +501,33 @@ void implement_CMP_extended_register(instruction instruct) {
     NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
 }
 
+void implement_EOR_shifted_register(instruction instruct) {
+    printf("Implementing EOR(Shifter Register)\n");
+
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
+    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];  // Valor del registro rm
+
+    // Ejecutar la operación
+    uint64_t result = op1 ^ op2;
+    printf("op1: 0x%" PRIx64 ", op2: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, op2, result);
+    NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+
+    // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
+    NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
+    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
+    printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
+}
+
 // 0000000
 // 0000000
 // 0000000
 // pag 211
 
 // cap 6.2.29
+
+// z = 1
+// z = 1
+// z = 1
+// z = 1
+// z = 1
+// HALT
