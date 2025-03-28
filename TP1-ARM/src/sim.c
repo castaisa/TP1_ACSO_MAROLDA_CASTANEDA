@@ -60,6 +60,8 @@ void implement_STURH(instruction instruct);
 void implement_LDURH(instruction instruct);
 void implement_AND_inmediate(instruction instruct);
 void implement_SUB_inmediate(instruction instruct);
+void implement_CBZ(instruction instruct);
+void implement_CBNZ(instruction instruct);
 
 // void decode_instruction_with_opcode(instruction *instr);
 
@@ -129,15 +131,15 @@ void process_instruction()
     // if (instruct.name == "LSR") implement_LSR(instruct);
     if (strcmp(instruct.name, "STUR") == 0) implement_STUR(instruct);
     if (strcmp(instruct.name, "STURB") == 0) implement_STURB(instruct);
-    if (instruct.name == "STURH") implement_STURH(instruct);
+    if (strcmp(instruct.name, "STURH") == 0) implement_STURH(instruct);
     if (strcmp(instruct.name, "LDUR") == 0) implement_LDUR(instruct);
     if (strcmp(instruct.name, "LDURB") == 0) implement_LDURB(instruct);
-    if (instruct.name == "LDURH") implement_LDURH(instruct);
+    if (strcmp(instruct.name, "LDURH") == 0) implement_LDURH(instruct);
     if (strcmp(instruct.name, "MOVZ") == 0) implement_MOVZ(instruct);
     // if (instruct.name == "ADD") implement_ADD(instruct);
     // if (instruct.name == "MUL") implement_MUL(instruct);
-    // if (instruct.name == "CBZ") implement_CBZ(instruct);
-    // if (instruct.name == "CBNZ") implement_CBNZ(instruct);
+    if (strcmp(instruct.name, "CBZ") == 0 ) implement_CBZ(instruct);
+    if (strcmp(instruct.name, "CBNZ") == 0) implement_CBNZ(instruct);
 }
 
 instruction decode_instruction(uint32_t bytecode) {
@@ -625,6 +627,46 @@ void implement_LDURH(instruction instruct) {
     CURRENT_STATE.REGS[instruct.rd] = loaded_value;  // Almacena en el registro de destino
 
     printf("Loaded 0x%X from address 0x%" PRIx64 "\n", loaded_value, address);
+}
+
+void implement_CBZ(instruction instruct) {
+    printf("Implementing CBZ\n");
+
+    // Verificar si el registro de destino es cero
+    int zero = (CURRENT_STATE.REGS[instruct.rt] == 0) ? 1 : 0;
+
+    // Realizar el salto si el registro de destino es cero
+    if (zero) {
+        int64_t signed_offset;
+        if (instruct.br_address & (1 << 18)) {  // Verifica si el bit 18 (signo) está encendido
+            signed_offset = (int64_t)(instruct.br_address | 0xFFFFFFFFFFFC0000);  // Extiende el signo
+        } else {
+            signed_offset = (int64_t)(instruct.br_address & 0x3FFFF);  // Mantiene los bits originales
+        }
+
+        NEXT_STATE.PC = CURRENT_STATE.PC + (signed_offset << 2);  // Actualizar el PC
+        printf("Branching to 0x%" PRIx64 "\n", NEXT_STATE.PC);
+    }
+}
+
+void implement_CBNZ(instruction instruct) {
+    printf("Implementing CBNZ\n");
+
+    // Verificar si el registro de destino no es cero
+    int zero = (CURRENT_STATE.REGS[instruct.rt] == 0) ? 1 : 0;
+
+    // Realizar el salto si el registro de destino no es cero
+    if (!zero) {
+        int64_t signed_offset;
+        if (instruct.br_address & (1 << 18)) {  // Verifica si el bit 18 (signo) está encendido
+            signed_offset = (int64_t)(instruct.br_address | 0xFFFFFFFFFFFC0000);  // Extiende el signo
+        } else {
+            signed_offset = (int64_t)(instruct.br_address & 0x3FFFF);  // Mantiene los bits originales
+        }
+
+        NEXT_STATE.PC = CURRENT_STATE.PC + (signed_offset << 2);  // Actualizar el PC
+        printf("Branching to 0x%" PRIx64 "\n", NEXT_STATE.PC);
+    }
 }
 
 // bcond results
