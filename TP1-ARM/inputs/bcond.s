@@ -1,36 +1,32 @@
 .text
-cmp X1, X1
-bne fool
-adds X2, X0, 10
-cmp X1, X2
-bne bar_bgt
-adds X3, X0, 10
+    // Test BEQ y BNE
+    cmp X11, X11  // X11 == X11
+    beq label_eq  // Debería saltar
+    adds X2, X0, 10  // No debería ejecutarse
 
-bar_bgt:
-adds X4, X0, 5
-subs X5, X2, 8
-cmp X4, X5
-bgt rancho_ble
-HLT 0
+label_eq:
+    adds X11, X11, 1  // Incrementa X11 para que no sea igual a X12
+    cmp X11, X12  // X11 != X12
+    bne label_ne  // Debería saltar
+    adds X3, X0, 20  // No debería ejecutarse
 
-fool:
-adds X6, X0, 10
-HLT 0
+label_ne:
+    // Test BGT
+    cmp X11, X12  // X11 > X12?
+    bgt label_gt  // Salta si X11 > X12
+    adds X4, X0, 30  // No debería ejecutarse si X11 > X12
 
-rancho_ble:
-adds X7, X0, 10
-cmp X7, X2
-ble casa_bge
-HLT 0
+label_gt:
+    // Test BLE
+    cmp X12, X11  // X12 <= X11?
+    ble label_le  // Salta si X12 <= X11
+    adds X5, X0, 40  // No debería ejecutarse si X12 <= X11
 
-casa_bge:
-adds X8, X0, 8
-cmp X8, X5
-bge parking_final
-adds X9, X5, X2
-HLT 0
+label_le:
+    // Test BGE
+    cmp X11, X12  // X11 >= X12?
+    bge label_ge  // Salta si X11 >= X12
+    adds X6, X0, 50  // No debería ejecutarse si X11 >= X12
 
-parking_final:
-adds X10, X0, 10
-HLT 0
-
+label_ge:
+    HLT 0

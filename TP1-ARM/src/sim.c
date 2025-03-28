@@ -627,16 +627,15 @@ void implement_LDURH(instruction instruct) {
     printf("Loaded 0x%X from address 0x%" PRIx64 "\n", loaded_value, address);
 }
 
-
 // bcond results
 // SUBS Z = 1, 
 // bne nada
-// adds x2 = 0xa
-// subs, 0xfffffffffffffff6, N=1
+// adds z = 0, x2 = 0xa
+// subs, N=1
 // bne nada
 // adds  N = 0, X4 = 0x5
 // subs x5 = 0x2
-// subs x31 = 0x3
+// subs nada
 // bgt nada
 // adds x7 = 0xa
 // subs x31 = 0x0
