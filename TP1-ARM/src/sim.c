@@ -63,6 +63,7 @@ void implement_AND_inmediate(instruction instruct);
 void implement_SUB_inmediate(instruction instruct);
 void implement_CBZ(instruction instruct);
 void implement_CBNZ(instruction instruct);
+void implement_B(instruction instruct);
 
 // void decode_instruction_with_opcode(instruction *instr);
 
@@ -78,7 +79,7 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     {0b11101010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ANDS(Shifted Register)"},  //pg 256
     {0b11001010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "EOR(Shifter Register)"},
     {0b10101010000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ORR(Shifted Register)"},
-    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G10", "B"},
+    {0b000101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G10", "B"},
     // {0b11010110000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G9", "BR"},      // capitulo 6.2.29
     {0b01010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "BCOND"},    // falta probar BNE, BGT, BGE, BLE
     {0b11010011011, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G5", "LSL(Immediate)"}, //antes G1
@@ -125,7 +126,7 @@ void process_instruction()
     if (strcmp(instruct.name, "ANDS(Shifted Register)") == 0) implement_ANDS_shifted_register(instruct);
     if (strcmp(instruct.name, "EOR(Shifter Register)") == 0 ) implement_EOR_shifted_register(instruct);
     if (strcmp(instruct.name, "ORR(Shifted Register)") == 0) implement_ORR_shifted_register(instruct);
-    // if (instruct.name == "B") implement_B(instruct);
+    if (strcmp(instruct.name, "B") == 0) implement_B(instruct);
     if (strcmp(instruct.name, "BCOND") == 0) implement_BCOND(instruct);
     // if (instruct.name == "BR") implement_BR(instruct);
     if (strcmp(instruct.name, "LSL(Immediate)") == 0) implement_LSL_immediate(instruct);
@@ -324,12 +325,16 @@ void implement_SUBS_extended_register(instruction instruct) {
     // Ejecutar la operación
     uint64_t result = op1 - op2;
     printf("op1: 0x%" PRIx64 ", op2: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, op2, result);
-    NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
 
     // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
     NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
     NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
-    printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
+
+    // Si rd no es X31, actualizar el registro
+    if (instruct.rd != 31) {
+        NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+        printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
+    }
 }
 
 void implement_HLT(instruction instruct) {
@@ -635,12 +640,9 @@ void implement_CBZ(instruction instruct) {
 
     // Verificar si el registro de destino es cero
     int zero = 0; // Inicializamos la variable que indica si el registro es cero
-    printf("Por aca esta vivo: despues del int zero\n");
     if (CURRENT_STATE.REGS[instruct.rt] == 0) {
-        printf("Por aca esta vivo: despues del if\n");
         zero = 1; // Si el valor del registro es 0, marcamos la variable como 1
     } else {
-        printf("Por aca esta vivo: despues del else\n");
         zero = 0; // Si no, marcamos la variable como 0
     }
 
@@ -658,13 +660,28 @@ void implement_CBZ(instruction instruct) {
             signed_offset = (uint64_t)(instruct.br_address & 0x3FFFF);  // Mantiene los bits originales
         }
 
+        // Imprimir el valor de br_address y el signed_offset
+        printf("Instruction branch address: 0x%" PRIx64 "\n", (uint64_t)instruct.br_address);
+        printf("Calculated signed offset: 0x%" PRIx64 "\n", signed_offset);
+
         // Calcular la dirección de salto
         uint64_t address = CURRENT_STATE.PC + (signed_offset << 2);
+        printf("Calculated address for jump: 0x%" PRIx64 "\n", address);
 
-        // Verificar si la dirección es válida (opcional, dependiendo de tu simulador)
+        // Verificar si la dirección de salto está fuera de los límites de memoria
+        if (address < 0x100000000000) { // 0x100000000000 (por ejemplo, límite superior de memoria)
+            printf("Warning: Jump address 0x%" PRIx64 " is out of bounds! Address too low.\n", address);
+        }
+
+        // Verificar que la dirección de salto sea múltiplo de 4 (alineación de direcciones en ARM)
         if (address % 4 != 0) {
             printf("Error: Dirección no alineada 0x%" PRIx64 "\n", address);
             return;
+        }
+
+        // Verificar si la dirección de salto es válida (si es mayor que el valor máximo esperado)
+        if (address > 0x1000000000000) { // 0x1000000000000 es un límite superior hipotético
+            printf("Warning: Jump address 0x%" PRIx64 " is out of bounds! Address too high.\n", address);
         }
 
         // Actualizar el PC (Program Counter) con la dirección calculada
@@ -703,13 +720,28 @@ void implement_CBNZ(instruction instruct) {
             signed_offset = (uint64_t)(instruct.br_address & 0x3FFFF);  // Mantiene los bits originales
         }
 
+        // Imprimir el valor de br_address y el signed_offset
+        printf("Instruction branch address: 0x%" PRIx64 "\n", (uint64_t)instruct.br_address);
+        printf("Calculated signed offset: 0x%" PRIx64 "\n", signed_offset);
+
         // Calcular la dirección de salto
         uint64_t address = CURRENT_STATE.PC + (signed_offset << 2);
+        printf("Calculated address for jump: 0x%" PRIx64 "\n", address);
 
-        // Verificar si la dirección es válida (opcional, dependiendo de tu simulador)
+        // Verificar si la dirección de salto está fuera de los límites de memoria
+        if (address < 0x100000000000) { // 0x100000000000 (por ejemplo, límite superior de memoria)
+            printf("Warning: Jump address 0x%" PRIx64 " is out of bounds! Address too low.\n", address);
+        }
+
+        // Verificar que la dirección de salto sea múltiplo de 4 (alineación de direcciones en ARM)
         if (address % 4 != 0) {
             printf("Error: Dirección no alineada 0x%" PRIx64 "\n", address);
             return;
+        }
+
+        // Verificar si la dirección de salto es válida (si es mayor que el valor máximo esperado)
+        if (address > 0x1000000000000) { // 0x1000000000000 es un límite superior hipotético
+            printf("Warning: Jump address 0x%" PRIx64 " is out of bounds! Address too high.\n", address);
         }
 
         // Actualizar el PC (Program Counter) con la dirección calculada
@@ -722,27 +754,45 @@ void implement_CBNZ(instruction instruct) {
         NEXT_STATE.PC = CURRENT_STATE.PC + 4;
     }
 }
-// bcond results
-// SUBS Z = 1, 
-// bne nada
-// adds z = 0, x2 = 0xa
-// subs, N=1
-// bne nada
-// adds  N = 0, X4 = 0x5
-// subs x5 = 0x2
-// subs nada
-// bgt nada
-// adds x7 = 0xa
-// subs x31 = 0x0
-// ble nada
-// adds x8 = 0x8
-// subs x31 = 0x6
-// bge nada
-// adds x10 = 0xa
-// HLT
+
+void implement_B(instruction instruct) {
+    printf("Implementing B\n");
+
+    // Verificar si el bit 18 (signo) está encendido para extender el signo
+    int64_t signed_offset;
+    if (instruct.br_address & (1 << 18)) {
+        signed_offset = (int64_t)(instruct.br_address | 0xFFFFFFFFFFFC0000);  // Extiende el signo
+    } else {
+        signed_offset = (int64_t)(instruct.br_address & 0x3FFFF);  // Mantiene los bits originales
+    }
+
+    // Imprimir el valor de br_address y el signed_offset
+    printf("Instruction branch address: 0x%" PRIx64 "\n", (uint64_t)instruct.br_address);
+    printf("Calculated signed offset: 0x%" PRIx64 "\n", signed_offset);
+
+    // Calcular la dirección de salto
+    uint64_t address = CURRENT_STATE.PC + (signed_offset << 2);
+    printf("Calculated address for jump: 0x%" PRIx64 "\n", address);
+
+    // Actualizar el PC (Program Counter) con la dirección calculada
+    NEXT_STATE.PC = address;
+
+    // Imprimir la dirección a la que se está realizando el salto
+    printf("Branching to 0x%" PRIx64 " (signed_offset: 0x%" PRIx64 ")\n", NEXT_STATE.PC, signed_offset);
+}
 
 
-
-// X0: 0x0
-// X1: 0x10000000
-// X2: 0x1234
+// br ref
+// x0 = 0x1
+// x1 = 0xb
+// x2 = 0xc
+// Z = 1, 
+// Z = 0
+// nada
+// x2 = 0x1
+// Z = 1, x2 = 0
+// nada
+// Z = 0, x1 = 0x4
+// x1 = 0x40
+// x1 = 0x4
+// nada

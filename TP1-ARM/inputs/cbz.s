@@ -1,5 +1,4 @@
 .text
-    .global_start
     adds X3, X3, 3
     cbz X1, salto
     adds X6, X6, 6
