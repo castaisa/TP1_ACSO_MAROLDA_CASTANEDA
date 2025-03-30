@@ -89,13 +89,13 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     {0b01010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "BCOND"},    // falta probar BNE, BGT, BGE, BLE
     {0b11010011011, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G5", "LSL(Immediate)"}, //antes G1
     {0b11010011010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G5", "LSR(Immediate)"},
-    {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STUR"},    // pg 236
-    {0b00111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURB"},   // pg 235
-    {0b0111100000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURH"},   // pg 235
-    {0b11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G14", "LDUR"},
-    {0b01111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURH"},   // pg 235
-    {0b0011100001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,"G13", "LDURB"},   // pg 235
-    {0b11010010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G4", "MOVZ"},
+    {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "D", "STUR"},    // pg 236
+    {0b00111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "D", "STURB"},   // pg 235
+    {0b0111100000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "D", "STURH"},   // pg 235
+    {0b11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "D", "LDUR"},
+    {0b01111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "D", "LDURH"},   // pg 235
+    {0b0011100001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,"D", "LDURB"},   // pg 235
+    {0b11010010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "IW", "MOVZ"},
     {0b10000101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(Extended Register)"},
     {0b10010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(immediate)"},
     {0b10011011000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "MUL"},
@@ -229,11 +229,11 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
         instr->alu_immediate = (bytecode >> 10) & MASK_11bits;  // Bits [21:10] - Inmediato ALU
         instr->shamt = (bytecode >> 22) & 0x3;   // Bits [23:22] - Shift amount
         strcpy(instr->type, "G3");
-    } else if (strcmp(instr->type, "G4") == 0) {
+    } else if (strcmp(instr->type, "IW") == 0) {
         instr->rd = bytecode & MASK_5bits;                 // Bits [4:0] - Registro de destino
         instr->mov_immediate = (bytecode >> 5) & MASK_16bits;  // Bits [20:5] - Inmediato MOV
         instr->shamt = (bytecode >> 21) & 0x3;       // Bits [22:21] - Shift amount (hw)
-        strcpy(instr->type, "G4");
+        strcpy(instr->type, "IW");
     } else if (strcmp(instr->type, "G5") == 0) {
         instr->rd = bytecode & MASK_5bits;               // Bits [4:0] - Registro destino
         instr->rn = (bytecode >> 5) & MASK_5bits;        // Bits [9:5] - Registro fuente
@@ -251,16 +251,11 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
     } else if (strcmp(instr->type, "G12") == 0) {
         instr->br_address = (bytecode) & MASK_26;   // Bits [25:] - Dirección de salto// Bits [25:0] - Dirección de salto
         strcpy(instr->type, "G12");
-    } else if (strcmp(instr->type, "G13") == 0) {
+    } else if (strcmp(instr->type, "D") == 0) {
         instr->rd = bytecode & MASK_5bits;             // Bits [4:0] - Registro de destino
         instr->rn = (bytecode >> 5) & MASK_5bits;      // Bits [9:5] - Registro fuente
         instr->dt_address = (bytecode >> 12) & 0x1FF;   // Bits [20:12] - Dirección de datos
-        strcpy(instr->type, "G13");
-    } else if (strcmp(instr->type, "G14") == 0) {
-        instr->rd = bytecode & MASK_5bits;             // Bits [4:0] - Registro de destino
-        instr->rn = (bytecode >> 5) & MASK_5bits;      // Bits [9:5] - Registro fuente
-        instr->dt_address = (bytecode >> 12) & 0x1FF;   // Bits [20:12] - Dirección de datos
-        strcpy(instr->type, "G14");
+        strcpy(instr->type, "D");
     }
 }
 
