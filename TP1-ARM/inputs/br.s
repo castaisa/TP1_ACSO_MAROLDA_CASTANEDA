@@ -1,23 +1,11 @@
 .text
-adds X0, X10, 1
-adds X1, X11, 11
-adds X2, X12, 12
-cmp X11, X12
-cmp X1, X0
-b foo
-adds X7, X1, 25
 
-foo2:
-adds X1, X0, foo2 - .  // Calcula la dirección de foo2 usando X0 como base
-br X1                  // Salta a foo2
-
-hlt:
-HLT 0
-
-foo:
-subs X2, X2, X1    
-subs X2, X2, X0
-b foo2
-
+start:
+movz X0, 0x40       // Carga el valor 0x400 en X0
+lsl X0, X0, 16      // Desplaza X0 16 bits a la izquierda
+add X0, X0, 20     // Suma 32 a X0 y actualiza las banderas
+br X0                // Salta a la dirección almacenada en X0
+adds X2, X2, 32     // Suma 32 a X2 y actualiza las banderas
+adds X1, X1, 64     // Suma 64 a X1 y actualiza las banderas
 
 HLT 0

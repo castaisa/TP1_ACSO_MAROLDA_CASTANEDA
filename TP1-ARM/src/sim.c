@@ -16,6 +16,7 @@
 #define MASK_11bits 0xFFF
 #define MASK_16bits 0xFFFF
 #define MASK_19bits 0x7FFFF
+#define MASK_26bits 0x3FFFFFFF
 
 typedef struct instruction_t{
     uint32_t opcode;
@@ -23,6 +24,7 @@ typedef struct instruction_t{
     uint32_t rn;
     uint32_t rm;
     uint32_t rt;
+    uint32_t ra;
     uint32_t shamt;
     uint32_t alu_immediate;
     uint32_t dt_address;
@@ -33,7 +35,7 @@ typedef struct instruction_t{
     uint32_t imms;
     uint32_t imm19;
     char type[20];  
-    char *name;     // Nombre de la instrucción
+    char *name;
 } instruction;
 
 void process_instruction();
@@ -64,40 +66,45 @@ void implement_SUB_inmediate(instruction instruct);
 void implement_CBZ(instruction instruct);
 void implement_CBNZ(instruction instruct);
 void implement_B(instruction instruct);
+void implement_BR(instruction instruct);
+void implement_MUL(instruction instruct);
+void implement_ADD_immediate(instruction instruct);
+void implement_LSR_immediate(instruction instruct);
+void implement_ADD_extended_register(instruction instruct);
 
 // void decode_instruction_with_opcode(instruction *instr);
 
 
 const instruction opcode_table[OPCODE_TABLE_SIZE] = {
-    {0b1010101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ADDS(Extended Register)"},  // pg 257
-    {0b10110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADDS(immediate)"}, 
-    {0b1110101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "SUBS(Extended Register)"},
-    {0b11110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUBS(immediate)"},
-    {0b00000000000000000000011010100010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "HLT"},
-    {0b11101011001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,"G2", "CMP(Extended Register)"},    // NO ESTA COMPROBADO
+    {0b1010101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ADDS(Extended Register)"},  // pg 257
+    {0b10110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADDS(immediate)"}, 
+    {0b1110101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "SUBS(Extended Register)"},
+    {0b11110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUBS(immediate)"},
+    {0b00000000000000000000011010100010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "HLT"},
+    {0b11101011001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,"G2", "CMP(Extended Register)"},    // NO ESTA COMPROBADO
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "CMP(immediate)"},
-    {0b11101010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ANDS(Shifted Register)"},  //pg 256
-    {0b11001010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "EOR(Shifter Register)"},
-    {0b10101010000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ORR(Shifted Register)"},
-    {0b000101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G10", "B"},
-    // {0b11010110000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G9", "BR"},      // capitulo 6.2.29
-    {0b01010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "BCOND"},    // falta probar BNE, BGT, BGE, BLE
-    {0b11010011011, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G5", "LSL(Immediate)"}, //antes G1
-    // {0b11010011010, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "LSR(Immediate)"},
-    {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STUR"},    // pg 236
-    {0b00111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURB"},   // pg 235
-    {0b0111100000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURH"},   // pg 235
-    {0b11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G14", "LDUR"},
-    {0b01111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURH"},   // pg 235
-    {0b0011100001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURB"},   // pg 235
-    {0b11010010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G4", "MOVZ"},
-    // {0b10000101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(Extended Register)"},
-    // {0b10010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(immediate)"},
-    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "MUL"},
-    {0b10110100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G11", "CBZ"},
-    {0b10110101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G11", "CBNZ"},
-    {11010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUB(immediate)"},
-    {1001001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "AND(immediate)"},
+    {0b11101010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ANDS(Shifted Register)"},  //pg 256
+    {0b11001010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "EOR(Shifter Register)"},
+    {0b10101010000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ORR(Shifted Register)"},
+    {0b000101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G12", "B"},
+    {0b11010110000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "BR"},      // capitulo 6.2.29
+    {0b01010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "BCOND"},    // falta probar BNE, BGT, BGE, BLE
+    {0b11010011011, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G5", "LSL(Immediate)"}, //antes G1
+    {0b11010011010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G5", "LSR(Immediate)"},
+    {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STUR"},    // pg 236
+    {0b00111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURB"},   // pg 235
+    {0b0111100000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "STURH"},   // pg 235
+    {0b11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G14", "LDUR"},
+    {0b01111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G13", "LDURH"},   // pg 235
+    {0b0011100001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,"G13", "LDURB"},   // pg 235
+    {0b11010010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G4", "MOVZ"},
+    {0b10000101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(Extended Register)"},
+    {0b10010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(immediate)"},
+    {0b10011011000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "MUL"},
+    {0b10110100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,"G7", "CBZ"},
+    {0b10110101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "CBNZ"},
+    {11010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUB(immediate)"},
+    {1001001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "AND(immediate)"},
 };
 
 
@@ -128,9 +135,9 @@ void process_instruction()
     if (strcmp(instruct.name, "ORR(Shifted Register)") == 0) implement_ORR_shifted_register(instruct);
     if (strcmp(instruct.name, "B") == 0) implement_B(instruct);
     if (strcmp(instruct.name, "BCOND") == 0) implement_BCOND(instruct);
-    // if (instruct.name == "BR") implement_BR(instruct);
+    if (strcmp(instruct.name, "BR") == 0) implement_BR(instruct);
     if (strcmp(instruct.name, "LSL(Immediate)") == 0) implement_LSL_immediate(instruct);
-    // if (instruct.name == "LSR") implement_LSR(instruct);
+    if (strcmp(instruct.name, "LSR(Immediate)") == 0) implement_LSR_immediate(instruct);
     if (strcmp(instruct.name, "STUR") == 0) implement_STUR(instruct);
     if (strcmp(instruct.name, "STURB") == 0) implement_STURB(instruct);
     if (strcmp(instruct.name, "STURH") == 0) implement_STURH(instruct);
@@ -138,8 +145,9 @@ void process_instruction()
     if (strcmp(instruct.name, "LDURB") == 0) implement_LDURB(instruct);
     if (strcmp(instruct.name, "LDURH") == 0) implement_LDURH(instruct);
     if (strcmp(instruct.name, "MOVZ") == 0) implement_MOVZ(instruct);
-    // if (instruct.name == "ADD") implement_ADD(instruct);
-    // if (instruct.name == "MUL") implement_MUL(instruct);
+    if (strcmp(instruct.name, "ADD(Extended Register)") == 0) implement_ADD_extended_register(instruct);
+    if (strcmp(instruct.name, "ADD(immediate)") == 0) implement_ADD_immediate(instruct);
+    if (strcmp(instruct.name, "MUL") == 0) implement_MUL(instruct);
     if (strcmp(instruct.name, "CBZ") == 0 ) implement_CBZ(instruct);
     if (strcmp(instruct.name, "CBNZ") == 0) implement_CBNZ(instruct);
 }
@@ -251,6 +259,9 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
         instr->imm19 = (bytecode >> 5) & 0x7FFFF;  // Bits [23:5] - Dirección de salto
         instr->rt = bytecode & MASK_5bits;                    // Bits [4:0] - Registro fuente
         strcpy(instr->type, "G11");
+    } else if (strcmp(instr->type, "G12") == 0) {
+        instr->br_address = (bytecode) & MASK_26;   // Bits [25:] - Dirección de salto// Bits [25:0] - Dirección de salto
+        strcpy(instr->type, "G12");
     } else if (strcmp(instr->type, "G13") == 0) {
         instr->rd = bytecode & MASK_5bits;             // Bits [4:0] - Registro de destino
         instr->rn = (bytecode >> 5) & MASK_5bits;      // Bits [9:5] - Registro fuente
@@ -654,14 +665,14 @@ void implement_CBZ(instruction instruct) {
         uint64_t signed_offset;
 
         // Verificar si el bit 18 (signo) está encendido para extender el signo
-        if (instruct.br_address & (1 << 18)) {
-            signed_offset = (uint64_t)(instruct.br_address | 0xFFFFFFFFFFFC0000);  // Extiende el signo
+        if (instruct.cond_br_address & (1 << 18)) {
+            signed_offset = (uint64_t)(instruct.cond_br_address | 0xFFFFFFFFFFFC0000);  // Extiende el signo
         } else {
-            signed_offset = (uint64_t)(instruct.br_address & 0x3FFFF);  // Mantiene los bits originales
+            signed_offset = (uint64_t)(instruct.cond_br_address & 0x3FFFF);  // Mantiene los bits originales
         }
 
         // Imprimir el valor de br_address y el signed_offset
-        printf("Instruction branch address: 0x%" PRIx64 "\n", (uint64_t)instruct.br_address);
+        printf("Instruction branch address: 0x%" PRIx64 "\n", (uint64_t)instruct.cond_br_address);
         printf("Calculated signed offset: 0x%" PRIx64 "\n", signed_offset);
 
         // Calcular la dirección de salto
@@ -715,13 +726,13 @@ void implement_CBNZ(instruction instruct) {
 
         // Verificar si el bit 18 (signo) está encendido para extender el signo
         if (instruct.br_address & (1 << 18)) {
-            signed_offset = (uint64_t)(instruct.br_address | 0xFFFFFFFFFFFC0000);  // Extiende el signo
+            signed_offset = (uint64_t)(instruct.cond_br_address | 0xFFFFFFFFFFFC0000);  // Extiende el signo
         } else {
-            signed_offset = (uint64_t)(instruct.br_address & 0x3FFFF);  // Mantiene los bits originales
+            signed_offset = (uint64_t)(instruct.cond_br_address & 0x3FFFF);  // Mantiene los bits originales
         }
 
         // Imprimir el valor de br_address y el signed_offset
-        printf("Instruction branch address: 0x%" PRIx64 "\n", (uint64_t)instruct.br_address);
+        printf("Instruction branch address: 0x%" PRIx64 "\n", (uint64_t)instruct.cond_br_address);
         printf("Calculated signed offset: 0x%" PRIx64 "\n", signed_offset);
 
         // Calcular la dirección de salto
@@ -781,18 +792,102 @@ void implement_B(instruction instruct) {
     printf("Branching to 0x%" PRIx64 " (signed_offset: 0x%" PRIx64 ")\n", NEXT_STATE.PC, signed_offset);
 }
 
+void implement_BR(instruction instruct) {
+    printf("Implementing BR\n");
 
-// br ref
-// x0 = 0x1
-// x1 = 0xb
-// x2 = 0xc
-// Z = 1, 
-// Z = 0
-// nada
-// x2 = 0x1
-// Z = 1, x2 = 0
-// nada
-// Z = 0, x1 = 0x4
-// x1 = 0x40
-// x1 = 0x4
-// nada
+    // Obtener la dirección de salto desde el registro rn
+    uint64_t address = CURRENT_STATE.REGS[instruct.rn];
+
+    // Verificar que la dirección de salto sea válida (si es mayor que el valor máximo esperado)
+    if (address > 0x1000000000000) { // 0x1000000000000 es un límite superior hipotético
+        printf("Warning: Jump address 0x%" PRIx64 " is out of bounds! Address too high.\n", address);
+    }
+
+    // Verificar que la dirección de salto sea múltiplo de 4 (alineación de direcciones en ARM)
+    if (address % 4 != 0) {
+        printf("Error: Dirección no alineada 0x%" PRIx64 "\n", address);
+        return;
+    }
+
+    // Actualizar el PC (Program Counter) con la dirección calculada
+    NEXT_STATE.PC = address;
+
+    // Imprimir la dirección a la que se está realizando el salto
+    printf("Branching to 0x%" PRIx64 "\n", NEXT_STATE.PC);
+}
+
+void implement_MUL(instruction instruct) {
+    printf("Implementing MUL\n");
+
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
+    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];  // Valor del registro rm
+
+    // Ejecutar la operación
+    uint64_t result = op1 * op2;
+    printf("op1: 0x%" PRIx64 ", op2: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, op2, result);
+    NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+
+    // NO ACTUALIZA FLAGS POR AHORA
+    // NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
+    // NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
+    printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
+}
+
+void implement_ADD_immediate(instruction instruct) {
+    printf("Implementing ADD(immediate)\n");
+
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
+    uint64_t op2 = instruct.alu_immediate;           // Inmediato ALU
+
+    // Ejecutar la operación
+    uint64_t result = op1 + op2;
+    printf("op1: 0x%" PRIx64 ", op2: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, op2, result);
+    NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+
+    // NO ACTUALIZA FLAGS POR AHORA
+    // NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
+    // NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
+    printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
+}
+
+void implement_LSR_immediate(instruction instruct) {
+    printf("Implementing LSR(Immediate)\n");
+
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro fuente
+    uint64_t shift_amount = instruct.immr;            // Cantidad de desplazamiento
+
+    // Ejecutar la operación de LSR
+    uint64_t result = op1 >> shift_amount;
+
+    // Guardar resultado en rd
+    NEXT_STATE.REGS[instruct.rd] = result;
+
+    // // Actualizar FLAGS (solo N y Z)
+    // NEXT_STATE.FLAG_N = (result >> 63) & 1;  // Flag N (bit 63 indica negativo)
+    // NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0;  // Flag Z (1 si resultado es 0)
+
+    // Debugging
+    printf("op1: 0x%" PRIx64 ", shift_amount: %" PRIu64 ", result: 0x%" PRIx64 "\n", op1, shift_amount, result);
+    printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
+}
+
+void implement_ADD_extended_register(instruction instruct) {
+    printf("Implementing ADD(Extended Register)\n");
+
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
+    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];  // Valor del registro rm
+
+    // Ejecutar la operación
+    uint64_t result = op1 + op2;
+    printf("op1: 0x%" PRIx64 ", op2: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, op2, result);
+
+    // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
+    NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
+    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
+
+    // Si rd no es X31, actualizar el registro
+    if (instruct.rd != 31) {
+        NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+        printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
+    }
+}
