@@ -496,10 +496,9 @@ void implement_ORR_shifted_register(instruction instruct) {
     printf("Implementing ORR(Shifter Register)\n");
 
     uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];
-    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm]; 
+    uint64_t op2 = CURRENT_STATE.REGS[instruct.shamt];
 
     uint64_t result = op1 | op2;
-    
     NEXT_STATE.REGS[instruct.rd] = result;
 }
 
