@@ -56,7 +56,6 @@ void implement_LSL_immediate(instruction instruct);
 void implement_STUR(instruction instruct);
 void implement_LDUR(instruction instruct);
 void implement_LDURB(instruction instruct);
-void implement_CMP_extended_register(instruction instruct);
 void implement_BCOND(instruction instruct);
 void implement_ORR_shifted_register(instruction instruct);
 void implement_STURH(instruction instruct);
@@ -78,17 +77,15 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     {0b10110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "ADDS(immediate)"}, 
     {0b1110101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "SUBS(Extended Register)"},
     {0b11110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "SUBS(immediate)"},
-    {0b00000000000000000000011010100010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "CB", "HLT"},
-    {0b11101011001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,"G2", "CMP(Extended Register)"},    // NO ESTA COMPROBADO
-    // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "CMP(immediate)"},
+    {0b11010100010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "CB", "HLT"},
     {0b11101010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ANDS(Shifted Register)"},  //pg 256
     {0b11001010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "EOR(Shifter Register)"},
     {0b10101010000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "ORR(Shifted Register)"},
     {0b000101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "B", "B"},
     {0b11010110000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "BR"},      // capitulo 6.2.29
     {0b01010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "CB", "BCOND"},    // falta probar BNE, BGT, BGE, BLE
-    {0b11010011011, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G5", "LSL(Immediate)"}, //antes G1
-    {0b11010011010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G5", "LSR(Immediate)"},
+    {0b11010011011, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "R", "LSL(Immediate)"}, //antes G1
+    {0b11010011010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "R", "LSR(Immediate)"},
     {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "D", "STUR"},    // pg 236
     {0b00111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "D", "STURB"},   // pg 235
     {0b0111100000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "D", "STURH"},   // pg 235
@@ -228,12 +225,12 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
         instr->mov_immediate = (bytecode >> 5) & MASK_16bits;  // Bits [20:5] - Inmediato MOV
         instr->shamt = (bytecode >> 21) & 0x3;       // Bits [22:21] - Shift amount (hw)
         strcpy(instr->type, "IW");
-    } else if (strcmp(instr->type, "G5") == 0) {
+    } else if (strcmp(instr->type, "R") == 0) {
         instr->rd = bytecode & MASK_5bits;               // Bits [4:0] - Registro destino
         instr->rn = (bytecode >> 5) & MASK_5bits;        // Bits [9:5] - Registro fuente
         instr->imms = (bytecode >> 10) & 0x3F;     // Bits [15:10] - immr
         instr->immr = (bytecode >> 16) & 0x3F;     // Bits [21:16] - imms
-        strcpy(instr->type, "G5");
+        strcpy(instr->type, "R");
     } else if (strcmp(instr->type, "CB") == 0) {
         instr->cond_br_address = (bytecode >> 5) & MASK_19bits;     // Bits [23:5] - Dirección de salto condicional
         instr->rt = (bytecode) & MASK_5bits;  // Bits [5:0] - Dirección de salto condicional
@@ -293,12 +290,16 @@ void implement_SUBS_immediate(instruction instruct) {
     // Ejecutar la operación
     uint64_t result = op1 - op2;
     printf("op1: 0x%" PRIx64 ", op2: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, op2, result);
-    NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+    // NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
 
     // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
     NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
     NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
-    printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
+    
+    if (instruct.rd != 31) {
+        NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+        printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
+    }
 }
 
 void implement_SUBS_extended_register(instruction instruct) {
@@ -471,21 +472,6 @@ void implement_LDURB(instruction instruct) {
     // Guardar el valor en rd
     NEXT_STATE.REGS[instruct.rd] = value;
     printf("Loaded byte 0x%X into X%d\n", value, instruct.rd);
-}
-
-void implement_CMP_extended_register(instruction instruct) {
-    printf("Implementing CMP(Extended Register)\n");
-
-    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
-    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];  // Valor del registro rm
-
-    // Ejecutar la operación
-    uint64_t result = op1 - op2;
-    printf("op1: 0x%" PRIx64 ", op2: 0x%" PRIx64 ", result: 0x%" PRIx64 "\n", op1, op2, result);
-
-    // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
-    NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
-    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
 }
 
 void implement_EOR_shifted_register(instruction instruct) {
@@ -865,3 +851,15 @@ void implement_ADD_extended_register(instruction instruct) {
         printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
     }
 }
+
+
+// cmp
+// adds x0 = 0x1
+// subs nada
+// beq nada
+// subs Z = 1
+// adds nada
+// subs Z = 0 x3 = 0xb
+// beq nada
+// hlt nada
+// nada
