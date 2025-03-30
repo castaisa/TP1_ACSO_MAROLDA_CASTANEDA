@@ -73,13 +73,13 @@ void implement_ADD_extended_register(instruction instruct);
 
 
 const instruction opcode_table[OPCODE_TABLE_SIZE] = {
-    {0b1010101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ADDS(Extended Register)"},  // pg 257
+    {0b1010101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "X", "ADDS(Extended Register)"},  // pg 257
     {0b10110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "ADDS(immediate)"}, 
-    {0b1110101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "SUBS(Extended Register)"},
+    {0b1110101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "X", "SUBS(Extended Register)"},
     {0b11110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "SUBS(immediate)"},
     {0b11010100010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "CB", "HLT"},
-    {0b11101010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ANDS(Shifted Register)"},  //pg 256
-    {0b11001010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "EOR(Shifter Register)"},
+    {0b11101010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "X", "ANDS(Shifted Register)"},  //pg 256
+    {0b11001010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "X", "EOR(Shifter Register)"},
     {0b10101010000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "ORR(Shifted Register)"},
     {0b000101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "B", "B"},
     {0b11010110000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "BR"},      // capitulo 6.2.29
@@ -95,7 +95,7 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     {0b11010010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "IW", "MOVZ"},
     {0b10000101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "ADD(Extended Register)"},
     {0b10010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "ADD(immediate)"},
-    {0b10011011000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "MUL"},
+    {0b10011011000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "X", "MUL"},
     {0b10110100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,"CB", "CBZ"},
     {0b10110101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "CB", "CBNZ"},
     {11010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "SUB(immediate)"},
@@ -115,7 +115,6 @@ void process_instruction(){
     if (strcmp(instruct.name, "SUBS(immediate)") == 0) implement_SUBS_immediate(instruct);
     if (strcmp(instruct.name, "SUBS(Extended Register)") == 0) implement_SUBS_extended_register(instruct);
     if (strcmp(instruct.name, "HLT") == 0) implement_HLT(instruct);
-    // if (strcmp(instruct.name, "CMP(Extended Register)") == 0) implement_CMP_extended_register(instruct);
     if (strcmp(instruct.name, "ANDS(Shifted Register)") == 0) implement_ANDS_shifted_register(instruct);
     if (strcmp(instruct.name, "EOR(Shifter Register)") == 0 ) implement_EOR_shifted_register(instruct);
     if (strcmp(instruct.name, "ORR(Shifted Register)") == 0) implement_ORR_shifted_register(instruct);
@@ -214,12 +213,11 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
         instr->alu_immediate = (bytecode >> 10) & MASK_11bits;  // Bits [21:10] - Inmediato ALU
         instr->shamt = (bytecode >> 22) & 0x3;   // Bits [23:22] - Shift amount
         strcpy(instr->type, "I");
-    } else if (strcmp(instr->type, "G2") == 0) {
+    } else if (strcmp(instr->type, "X") == 0) {
         instr->rd = bytecode & MASK_5bits;             // Bits [4:0] - Registro de destino
         instr->rn = (bytecode >> 5) & MASK_5bits;      // Bits [9:5] - Registro fuente
         instr->rm = (bytecode >> 16) & MASK_5bits;     // Bits [20:16] - Registro fuente 2
-        instr->shamt = (bytecode >> 22) & 0x3;   // Bits [23:22] - Shift amount
-        strcpy(instr->type, "G2");
+        strcpy(instr->type, "X");
     } else if (strcmp(instr->type, "IW") == 0) {
         instr->rd = bytecode & MASK_5bits;                 // Bits [4:0] - Registro de destino
         instr->mov_immediate = (bytecode >> 5) & MASK_16bits;  // Bits [20:5] - Inmediato MOV
@@ -296,6 +294,7 @@ void implement_SUBS_immediate(instruction instruct) {
     NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
     NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
     
+    // if compare immediate
     if (instruct.rd != 31) {
         NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
         printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
@@ -316,7 +315,7 @@ void implement_SUBS_extended_register(instruction instruct) {
     NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
     NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
 
-    // Si rd no es X31, actualizar el registro
+    // if compare extended register
     if (instruct.rd != 31) {
         NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
         printf("Updated X%d to 0x%" PRIx64 "\n", instruct.rd, NEXT_STATE.REGS[instruct.rd]);
@@ -852,14 +851,3 @@ void implement_ADD_extended_register(instruction instruct) {
     }
 }
 
-
-// cmp
-// adds x0 = 0x1
-// subs nada
-// beq nada
-// subs Z = 1
-// adds nada
-// subs Z = 0 x3 = 0xb
-// beq nada
-// hlt nada
-// nada
