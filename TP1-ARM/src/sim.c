@@ -14,6 +14,7 @@
 #define MASK_16bits 0xFFFF
 #define MASK_19bits 0x7FFFF
 #define MASK_26bits 0x3FFFFFFF
+#define MASK_2bits 0x3
 
 typedef struct instruction_t{
     uint32_t opcode;
@@ -201,7 +202,7 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
         instr->rd = bytecode & MASK_5bits;             // Bits [4:0] - Registro de destino
         instr->rn = (bytecode >> 5) & MASK_5bits;      // Bits [9:5] - Registro fuente
         instr->alu_immediate = (bytecode >> 10) & MASK_11bits;  // Bits [21:10] - Inmediato ALU
-        instr->shamt = (bytecode >> 22) & 0x3;   // Bits [23:22] - Shift amount
+        instr->shamt = (bytecode >> 22) & MASK_2bits;   // Bits [23:22] - Shift amount
         strcpy(instr->type, "I");
     } else if (strcmp(instr->type, "X") == 0) {
         instr->rd = bytecode & MASK_5bits;             // Bits [4:0] - Registro de destino
@@ -211,7 +212,7 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
     } else if (strcmp(instr->type, "IW") == 0) {
         instr->rd = bytecode & MASK_5bits;                 // Bits [4:0] - Registro de destino
         instr->mov_immediate = (bytecode >> 5) & MASK_16bits;  // Bits [20:5] - Inmediato MOV
-        instr->shamt = (bytecode >> 21) & 0x3;       // Bits [22:21] - Shift amount (hw)
+        instr->shamt = (bytecode >> 21) & MASK_2bits;       // Bits [22:21] - Shift amount (hw)
         strcpy(instr->type, "IW");
     } else if (strcmp(instr->type, "R") == 0) {
         instr->rd = bytecode & MASK_5bits;               // Bits [4:0] - Registro destino
@@ -376,7 +377,7 @@ void implement_STURB(instruction instruct) {
 
     uint32_t aligned_address = address & ~0x3;
     uint32_t aligned_value = mem_read_32(aligned_address); 
-    uint32_t byte_shift = (address & 0x3) * 8;  
+    uint32_t byte_shift = (address & MASK_2bits) * 8;  
     aligned_value = (aligned_value & ~(0xFF << byte_shift)) | (value << byte_shift); 
     mem_write_32(aligned_address, aligned_value); 
 
@@ -418,7 +419,7 @@ void implement_LDURB(instruction instruct) {
 
     uint32_t aligned_address = address & ~0x3; 
     uint32_t aligned_value = mem_read_32(aligned_address);
-    uint32_t byte_shift = (address & 0x3) * 8;
+    uint32_t byte_shift = (address & MASK_2bits) * 8;
     uint8_t value = (aligned_value >> byte_shift) & 0xFF;
 
     NEXT_STATE.REGS[instruct.rd] = value;
