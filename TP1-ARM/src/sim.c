@@ -700,8 +700,6 @@ void implement_ADD_extended_register(instruction instruct) {
 
     uint64_t result = op1 + op2;
    
-    NEXT_STATE.FLAG_N = (result >> 63) & 1; 
-    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; 
 
     if (instruct.rd != 31) {
         NEXT_STATE.REGS[instruct.rd] = result; 
