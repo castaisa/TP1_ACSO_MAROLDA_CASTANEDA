@@ -8,6 +8,7 @@
 #define MASK_26 0x3F
 #define MASK_24 0xFF
 #define MASK_22 0x3FF
+#define MASK_9bits 0x1FF
 #define MASK_5bits 0x1F
 #define MASK_11bits 0xFFF
 #define MASK_16bits 0xFFFF
@@ -215,8 +216,8 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
     } else if (strcmp(instr->type, "R") == 0) {
         instr->rd = bytecode & MASK_5bits;               // Bits [4:0] - Registro destino
         instr->rn = (bytecode >> 5) & MASK_5bits;        // Bits [9:5] - Registro fuente
-        instr->shamt = (bytecode >> 10) & 0x3F;     // Bits [15:10] - immr
-        instr->rm = (bytecode >> 16) & 0x3F;     // Bits [21:16] - imms
+        instr->shamt = (bytecode >> 10) & MASK_26;     // Bits [15:10] - immr
+        instr->rm = (bytecode >> 16) & MASK_26;     // Bits [21:16] - imms
         strcpy(instr->type, "R");
     } else if (strcmp(instr->type, "CB") == 0) {
         instr->cond_br_address = (bytecode >> 5) & MASK_19bits;     // Bits [23:5] - Dirección de salto condicional
@@ -228,7 +229,7 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
     } else if (strcmp(instr->type, "D") == 0) {
         instr->rd = bytecode & MASK_5bits;             // Bits [4:0] - Registro de destino
         instr->rn = (bytecode >> 5) & MASK_5bits;      // Bits [9:5] - Registro fuente
-        instr->dt_address = (bytecode >> 12) & 0x1FF;   // Bits [20:12] - Dirección de datos
+        instr->dt_address = (bytecode >> 12) & MASK_9bits;   // Bits [20:12] - Dirección de datos
         strcpy(instr->type, "D");
     }
 }
