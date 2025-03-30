@@ -75,18 +75,18 @@ void implement_ADD_extended_register(instruction instruct);
 
 const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     {0b1010101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ADDS(Extended Register)"},  // pg 257
-    {0b10110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADDS(immediate)"}, 
+    {0b10110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "ADDS(immediate)"}, 
     {0b1110101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "SUBS(Extended Register)"},
-    {0b11110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUBS(immediate)"},
-    {0b00000000000000000000011010100010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "HLT"},
+    {0b11110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "SUBS(immediate)"},
+    {0b00000000000000000000011010100010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "CB", "HLT"},
     {0b11101011001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,"G2", "CMP(Extended Register)"},    // NO ESTA COMPROBADO
     // {0b000, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "CMP(immediate)"},
     {0b11101010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ANDS(Shifted Register)"},  //pg 256
     {0b11001010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "EOR(Shifter Register)"},
-    {0b10101010000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ORR(Shifted Register)"},
-    {0b000101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G12", "B"},
-    {0b11010110000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "BR"},      // capitulo 6.2.29
-    {0b01010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "BCOND"},    // falta probar BNE, BGT, BGE, BLE
+    {0b10101010000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "ORR(Shifted Register)"},
+    {0b000101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "B", "B"},
+    {0b11010110000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "BR"},      // capitulo 6.2.29
+    {0b01010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "CB", "BCOND"},    // falta probar BNE, BGT, BGE, BLE
     {0b11010011011, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G5", "LSL(Immediate)"}, //antes G1
     {0b11010011010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G5", "LSR(Immediate)"},
     {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "D", "STUR"},    // pg 236
@@ -96,13 +96,13 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     {0b01111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "D", "LDURH"},   // pg 235
     {0b0011100001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,"D", "LDURB"},   // pg 235
     {0b11010010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "IW", "MOVZ"},
-    {0b10000101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(Extended Register)"},
-    {0b10010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "ADD(immediate)"},
+    {0b10000101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "ADD(Extended Register)"},
+    {0b10010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "ADD(immediate)"},
     {0b10011011000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "MUL"},
-    {0b10110100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,"G7", "CBZ"},
-    {0b10110101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G7", "CBNZ"},
-    {11010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "SUB(immediate)"},
-    {1001001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G1", "AND(immediate)"},
+    {0b10110100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,"CB", "CBZ"},
+    {0b10110101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "CB", "CBNZ"},
+    {11010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "SUB(immediate)"},
+    {1001001000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "AND(immediate)"},
 };
 
 
@@ -211,24 +211,18 @@ void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
 void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
     // falta completar el resto de la instruccion con el opcode
     // Completar el resto de la instrucción con el opcode
-     if (strcmp(instr->type, "G1") == 0) {
+     if (strcmp(instr->type, "I") == 0) {
         instr->rd = bytecode & MASK_5bits;             // Bits [4:0] - Registro de destino
         instr->rn = (bytecode >> 5) & MASK_5bits;      // Bits [9:5] - Registro fuente
         instr->alu_immediate = (bytecode >> 10) & MASK_11bits;  // Bits [21:10] - Inmediato ALU
         instr->shamt = (bytecode >> 22) & 0x3;   // Bits [23:22] - Shift amount
-        strcpy(instr->type, "G1");
+        strcpy(instr->type, "I");
     } else if (strcmp(instr->type, "G2") == 0) {
         instr->rd = bytecode & MASK_5bits;             // Bits [4:0] - Registro de destino
         instr->rn = (bytecode >> 5) & MASK_5bits;      // Bits [9:5] - Registro fuente
         instr->rm = (bytecode >> 16) & MASK_5bits;     // Bits [20:16] - Registro fuente 2
         instr->shamt = (bytecode >> 22) & 0x3;   // Bits [23:22] - Shift amount
         strcpy(instr->type, "G2");
-    } else if (strcmp(instr->type, "G3") == 0) {
-        instr->rd = bytecode & MASK_5bits;             // Bits [4:0] - Registro de destino
-        instr->rn = (bytecode >> 5) & MASK_5bits;      // Bits [9:5] - Registro fuente
-        instr->alu_immediate = (bytecode >> 10) & MASK_11bits;  // Bits [21:10] - Inmediato ALU
-        instr->shamt = (bytecode >> 22) & 0x3;   // Bits [23:22] - Shift amount
-        strcpy(instr->type, "G3");
     } else if (strcmp(instr->type, "IW") == 0) {
         instr->rd = bytecode & MASK_5bits;                 // Bits [4:0] - Registro de destino
         instr->mov_immediate = (bytecode >> 5) & MASK_16bits;  // Bits [20:5] - Inmediato MOV
@@ -240,17 +234,13 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
         instr->imms = (bytecode >> 10) & 0x3F;     // Bits [15:10] - immr
         instr->immr = (bytecode >> 16) & 0x3F;     // Bits [21:16] - imms
         strcpy(instr->type, "G5");
-    } else if (strcmp(instr->type, "G7") == 0) {
+    } else if (strcmp(instr->type, "CB") == 0) {
         instr->cond_br_address = (bytecode >> 5) & MASK_19bits;     // Bits [23:5] - Dirección de salto condicional
         instr->rt = (bytecode) & MASK_5bits;  // Bits [5:0] - Dirección de salto condicional
-        strcpy(instr->type, "G7");
-    } else if (strcmp(instr->type, "G11") == 0) {
-        instr->imm19 = (bytecode >> 5) & 0x7FFFF;  // Bits [23:5] - Dirección de salto
-        instr->rt = bytecode & MASK_5bits;                    // Bits [4:0] - Registro fuente
-        strcpy(instr->type, "G11");
-    } else if (strcmp(instr->type, "G12") == 0) {
+        strcpy(instr->type, "CB");
+    } else if (strcmp(instr->type, "B") == 0) {
         instr->br_address = (bytecode) & MASK_26;   // Bits [25:] - Dirección de salto// Bits [25:0] - Dirección de salto
-        strcpy(instr->type, "G12");
+        strcpy(instr->type, "B");
     } else if (strcmp(instr->type, "D") == 0) {
         instr->rd = bytecode & MASK_5bits;             // Bits [4:0] - Registro de destino
         instr->rn = (bytecode >> 5) & MASK_5bits;      // Bits [9:5] - Registro fuente

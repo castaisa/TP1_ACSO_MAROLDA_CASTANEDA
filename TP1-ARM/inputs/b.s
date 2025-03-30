@@ -1,15 +1,15 @@
 .text
-adds X0, X10, 1
+adds X5, X15, 1
 adds X1, X11, 11
-adds X2, X12, 12
+adds X16, X12, 12
 cmp X11, X12
-cmp X1, X0
+cmp X1, X5
 b foo
 adds X7, X1, 25
 
 foo:
-subs X2, X2, X1    
-subs X2, X2, X0
+subs X16, X16, X1    
+subs X16, X16, X5
 b rancho_final
 
 rancho_final:
