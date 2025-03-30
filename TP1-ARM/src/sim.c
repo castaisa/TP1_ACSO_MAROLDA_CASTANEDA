@@ -8,10 +8,6 @@
 #define MASK_26 0x3F
 #define MASK_24 0xFF
 #define MASK_22 0x3FF
-// #define MASK_21 0b00000111111111111  // 0x7FF  = 0000 0111 1111 1111 (11 bits en 1)
-//#define MASK_26 0b00111111          // 0x3F   = 0011 1111 (6 bits en 1)
-//#define MASK_24 0b00111111          // 0x3F   = 0011 1111 (6 bits en 1)
-//#define MASK_22 0b00000111111111111 // 0x7FF  = 0000 0111 1111 1111 (11 bits en 1)
 #define MASK_5bits 0x1F
 #define MASK_11bits 0xFFF
 #define MASK_16bits 0xFFFF
@@ -69,25 +65,25 @@ void implement_ADD_extended_register(instruction instruct);
 
 
 const instruction opcode_table[OPCODE_TABLE_SIZE] = {
-    {0b1010101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "X", "ADDS(Extended Register)"},  // pg 257
+    {0b1010101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "X", "ADDS(Extended Register)"},
     {0b10110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "ADDS(immediate)"}, 
     {0b1110101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "X", "SUBS(Extended Register)"},
     {0b11110001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "SUBS(immediate)"},
     {0b11010100010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "CB", "HLT"},
-    {0b11101010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "X", "ANDS(Shifted Register)"},  //pg 256
+    {0b11101010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "X", "ANDS(Shifted Register)"},
     {0b11001010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "X", "EOR(Shifter Register)"},
     {0b10101010000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "ORR(Shifted Register)"},
     {0b000101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "B", "B"},
-    {0b11010110000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "BR"},      // capitulo 6.2.29
-    {0b01010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "CB", "BCOND"},    // falta probar BNE, BGT, BGE, BLE
-    {0b11010011011, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "R", "LSL(Immediate)"}, //antes G1
+    {0b11010110000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "BR"}, 
+    {0b01010100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "CB", "BCOND"},  
+    {0b11010011011, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "R", "LSL(Immediate)"},
     {0b11010011010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "R", "LSR(Immediate)"},
-    {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "D", "STUR"},    // pg 236
-    {0b00111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "D", "STURB"},   // pg 235
-    {0b0111100000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "D", "STURH"},   // pg 235
+    {0b11111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "D", "STUR"}, 
+    {0b00111000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "D", "STURB"},
+    {0b0111100000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "D", "STURH"}, 
     {0b11111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "D", "LDUR"},
-    {0b01111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "D", "LDURH"},   // pg 235
-    {0b0011100001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,"D", "LDURB"},   // pg 235
+    {0b01111000010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "D", "LDURH"},
+    {0b0011100001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,"D", "LDURB"},
     {0b11010010, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "IW", "MOVZ"},
     {0b10000101101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "ADD(Extended Register)"},
     {0b10010001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "I", "ADD(immediate)"},
@@ -137,7 +133,6 @@ instruction decode_instruction(uint32_t bytecode) {
     instruction instr_def;
 
     decode_instruction_opcode(&instr_def, bytecode);
-    // falta con el opcode completar el resto de la info en el struct de instruction
     decode_completely_instruction(&instr_def, bytecode);
 
     return instr_def;
@@ -201,8 +196,6 @@ void decode_instruction_opcode(instruction *instr, uint32_t bytecode) {
 }
 
 void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
-    // falta completar el resto de la instruccion con el opcode
-    // Completar el resto de la instrucción con el opcode
      if (strcmp(instr->type, "I") == 0) {
         instr->rd = bytecode & MASK_5bits;             // Bits [4:0] - Registro de destino
         instr->rn = (bytecode >> 5) & MASK_5bits;      // Bits [9:5] - Registro fuente
@@ -474,16 +467,16 @@ void implement_BCOND(instruction instruct) {
             break;
     }
 
-    // Realizar el salto si la condición se cumple
+    
     if (branch) {
         int64_t signed_offset;
-        if (instruct.cond_br_address & (1 << 18)) {  // Verifica si el bit 18 (signo) está encendido
-            signed_offset = (int64_t)(instruct.cond_br_address | 0xFFFFFFFFFFFC0000);  // Extiende el signo
+        if (instruct.cond_br_address & (1 << 18)) { 
+            signed_offset = (int64_t)(instruct.cond_br_address | 0xFFFFFFFFFFFC0000);
         } else {
-            signed_offset = (int64_t)(instruct.cond_br_address & 0x3FFFF);  // Mantiene los bits originales
+            signed_offset = (int64_t)(instruct.cond_br_address & 0x3FFFF); 
         }
 
-        NEXT_STATE.PC = CURRENT_STATE.PC + (signed_offset << 2);  // Actualizar el PC
+        NEXT_STATE.PC = CURRENT_STATE.PC + (signed_offset << 2);
        
     }
 }
@@ -504,22 +497,21 @@ void implement_STURH(instruction instruct) {
 
     uint64_t signed_offset;
     if (instruct.dt_address & (1 << 8)) { 
-        signed_offset = (uint64_t)(instruct.dt_address | 0xFFFFFFFFFFFFFF00);  // Extiende el signo
+        signed_offset = (uint64_t)(instruct.dt_address | 0xFFFFFFFFFFFFFF00);
     } else {
-        signed_offset = (uint64_t)(instruct.dt_address & 0x1FF);  // Mantiene los bits originales
+        signed_offset = (uint64_t)(instruct.dt_address & 0x1FF); 
     }
 
-    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset;  // Calcula la dirección
-    uint16_t value = CURRENT_STATE.REGS[instruct.rd] & 0xFFFF;  // Extrae los 16 bits menos significativos de Rd
+    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset; 
+    uint16_t value = CURRENT_STATE.REGS[instruct.rd] & 0xFFFF; 
 
-    // Acceso alineado a 32 bits
-    uint32_t aligned_address = address & ~0x3;  // Alinea la dirección a 4 bytes
-    uint32_t aligned_value = mem_read_32(aligned_address);  // Lee el valor de 32 bits en esa dirección
-    uint32_t halfword_shift = (address & 0x2) * 8;  // Determina el desplazamiento dentro de los 32 bits
+    uint32_t aligned_address = address & ~0x3; 
+    uint32_t aligned_value = mem_read_32(aligned_address); 
+    uint32_t halfword_shift = (address & 0x2) * 8; 
 
-    // Modifica solo los 16 bits correspondientes
+    
     aligned_value = (aligned_value & ~(0xFFFF << halfword_shift)) | (value << halfword_shift);
-    mem_write_32(aligned_address, aligned_value);  // Escribe el valor modificado de vuelta a memoria
+    mem_write_32(aligned_address, aligned_value); 
 
 }
 
@@ -527,70 +519,55 @@ void implement_LDURH(instruction instruct) {
     printf("Implementing LDURH\n");
 
     uint64_t signed_offset;
-    if (instruct.dt_address & (1 << 8)) {  // Verifica si el bit 8 (signo) está encendido
-        signed_offset = (uint64_t)(instruct.dt_address | 0xFFFFFFFFFFFFFF00);  // Extiende el signo
+    if (instruct.dt_address & (1 << 8)) { 
+        signed_offset = (uint64_t)(instruct.dt_address | 0xFFFFFFFFFFFFFF00); 
     } else {
-        signed_offset = (uint64_t)(instruct.dt_address & 0x1FF);  // Mantiene los bits originales
+        signed_offset = (uint64_t)(instruct.dt_address & 0x1FF); 
     }
 
-    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset;  // Calcula la dirección
+    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset;
 
-    // Acceso alineado a 32 bits
-    uint32_t aligned_address = address & ~0x3;  // Alinea la dirección a 4 bytes
-    uint32_t aligned_value = mem_read_32(aligned_address);  // Lee los 32 bits en esa dirección
-    uint32_t halfword_shift = (address & 0x2) * 8;  // Determina el desplazamiento dentro de los 32 bits
+    
+    uint32_t aligned_address = address & ~0x3;  
+    uint32_t aligned_value = mem_read_32(aligned_address); 
+    uint32_t halfword_shift = (address & 0x2) * 8; 
 
-    // Extrae los 16 bits correspondientes
+   
     uint16_t loaded_value = (aligned_value >> halfword_shift) & 0xFFFF;
-    CURRENT_STATE.REGS[instruct.rd] = loaded_value;  // Almacena en el registro de destino
+    CURRENT_STATE.REGS[instruct.rd] = loaded_value;  
 }
 
 void implement_CBZ(instruction instruct) {
     printf("Implementing CBZ\n");
 
-    // Verificar si el registro de destino es cero
-    int zero = 0; // Inicializamos la variable que indica si el registro es cero
+    
+    int zero = 0;
     if (CURRENT_STATE.REGS[instruct.rt] == 0) {
-        zero = 1; // Si el valor del registro es 0, marcamos la variable como 1
+        zero = 1; 
     } else {
-        zero = 0; // Si no, marcamos la variable como 0
+        zero = 0; 
     }
-   
 
-    // Si el registro es cero, realizamos el salto
     if (zero == 1) {
         uint64_t signed_offset;
 
-        // Verificar si el bit 18 (signo) está encendido para extender el signo
+        
         if (instruct.cond_br_address & (1 << 18)) {
-            signed_offset = (uint64_t)(instruct.cond_br_address | 0xFFFFFFFFFFFC0000);  // Extiende el signo
+            signed_offset = (uint64_t)(instruct.cond_br_address | 0xFFFFFFFFFFFC0000); 
         } else {
-            signed_offset = (uint64_t)(instruct.cond_br_address & 0x3FFFF);  // Mantiene los bits originales
+            signed_offset = (uint64_t)(instruct.cond_br_address & 0x3FFFF);
         }
 
-        // Calcular la dirección de salto
         uint64_t address = CURRENT_STATE.PC + (signed_offset << 2);
-       
-
-        // Verificar si la dirección de salto está fuera de los límites de memoria
-        if (address < 0x100000000000) { // 0x100000000000 (por ejemplo, límite superior de memoria)
-        }
-
-        // Verificar que la dirección de salto sea múltiplo de 4 (alineación de direcciones en ARM)
+        
         if (address % 4 != 0) {
             return;
         }
 
-        // Verificar si la dirección de salto es válida (si es mayor que el valor máximo esperado)
-        if (address > 0x1000000000000) { // 0x1000000000000 es un límite superior hipotético
-        }
-
-        // Actualizar el PC (Program Counter) con la dirección calculada
         NEXT_STATE.PC = address;
 
         
     } else {
-        // Si no se realiza el salto, avanzar al siguiente bytecode
         NEXT_STATE.PC = CURRENT_STATE.PC + 4;
     }
 }
@@ -598,47 +575,32 @@ void implement_CBZ(instruction instruct) {
 void implement_CBNZ(instruction instruct) {
     printf("Implementing CBNZ\n");
 
-    // Verificar si el registro de destino no es cero
-    int zero = 0; // Inicializamos la variable que indica si el registro es cero
+    
+    int zero = 0; 
     if (CURRENT_STATE.REGS[instruct.rt] == 0) {
-        zero = 1; // Si el valor del registro es 0, marcamos la variable como 1
+        zero = 1; 
     } else {
-        zero = 0; // Si no, marcamos la variable como 0
+        zero = 0; 
     }
-    // Si el registro no es cero, realizamos el salto
+    
     if (zero == 0) {
         uint64_t signed_offset;
 
-        // Verificar si el bit 18 (signo) está encendido para extender el signo
+        
         if (instruct.br_address & (1 << 18)) {
-            signed_offset = (uint64_t)(instruct.cond_br_address | 0xFFFFFFFFFFFC0000);  // Extiende el signo
+            signed_offset = (uint64_t)(instruct.cond_br_address | 0xFFFFFFFFFFFC0000); 
         } else {
-            signed_offset = (uint64_t)(instruct.cond_br_address & 0x3FFFF);  // Mantiene los bits originales
+            signed_offset = (uint64_t)(instruct.cond_br_address & 0x3FFFF);
         }
 
-        // Calcular la dirección de salto
         uint64_t address = CURRENT_STATE.PC + (signed_offset << 2);
-       
 
-        // Verificar si la dirección de salto está fuera de los límites de memoria
-        if (address < 0x100000000000) { // 0x100000000000 (por ejemplo, límite superior de memoria)
-           
-        }
-
-        // Verificar que la dirección de salto sea múltiplo de 4 (alineación de direcciones en ARM)
         if (address % 4 != 0) {
             return;
         }
 
-        // Verificar si la dirección de salto es válida (si es mayor que el valor máximo esperado)
-        if (address > 0x1000000000000) { // 0x1000000000000 es un límite superior hipotético
-           
-        }
-
-        // Actualizar el PC (Program Counter) con la dirección calculada
         NEXT_STATE.PC = address;
     } else {
-        // Si no se realiza el salto, avanzar al siguiente bytecode
         NEXT_STATE.PC = CURRENT_STATE.PC + 4;
     }
 }
@@ -646,100 +608,84 @@ void implement_CBNZ(instruction instruct) {
 void implement_B(instruction instruct) {
     printf("Implementing B\n");
 
-    // Verificar si el bit 18 (signo) está encendido para extender el signo
     int64_t signed_offset;
     if (instruct.br_address & (1 << 18)) {
-        signed_offset = (int64_t)(instruct.br_address | 0xFFFFFFFFFFFC0000);  // Extiende el signo
+        signed_offset = (int64_t)(instruct.br_address | 0xFFFFFFFFFFFC0000);
     } else {
-        signed_offset = (int64_t)(instruct.br_address & 0x3FFFF);  // Mantiene los bits originales
+        signed_offset = (int64_t)(instruct.br_address & 0x3FFFF); 
     }
 
-    // Calcular la dirección de salto
     uint64_t address = CURRENT_STATE.PC + (signed_offset << 2);
 
-    // Actualizar el PC (Program Counter) con la dirección calculada
     NEXT_STATE.PC = address;
 }
 
 void implement_BR(instruction instruct) {
     printf("Implementing BR\n");
 
-    // Obtener la dirección de salto desde el registro rn
     uint64_t address = CURRENT_STATE.REGS[instruct.rn];
 
-    // Verificar que la dirección de salto sea válida (si es mayor que el valor máximo esperado)
-    if (address > 0x1000000000000) { // 0x1000000000000 es un límite superior hipotético
+    if (address > 0x1000000000000) { 
         printf("Warning: Jump address 0x%" PRIx64 " is out of bounds! Address too high.\n", address);
     }
 
-    // Verificar que la dirección de salto sea múltiplo de 4 (alineación de direcciones en ARM)
     if (address % 4 != 0) {
         printf("Error: Dirección no alineada 0x%" PRIx64 "\n", address);
         return;
     }
 
-    // Actualizar el PC (Program Counter) con la dirección calculada
     NEXT_STATE.PC = address;
 
-    // Imprimir la dirección a la que se está realizando el salto
     printf("Branching to 0x%" PRIx64 "\n", NEXT_STATE.PC);
 }
 
 void implement_MUL(instruction instruct) {
     printf("Implementing MUL\n");
 
-    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
-    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];  // Valor del registro rm
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn]; 
+    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm]; 
 
-    // Ejecutar la operación
     uint64_t result = op1 * op2;
   
-    NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+    NEXT_STATE.REGS[instruct.rd] = result;
 
 }
 
 void implement_ADD_immediate(instruction instruct) {
     printf("Implementing ADD(immediate)\n");
 
-    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
-    uint64_t op2 = instruct.alu_immediate;           // Inmediato ALU
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn]; 
+    uint64_t op2 = instruct.alu_immediate; 
 
-    // Ejecutar la operación
     uint64_t result = op1 + op2;
-    NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+    NEXT_STATE.REGS[instruct.rd] = result; 
 
 }
 
 void implement_LSR_immediate(instruction instruct) {
     printf("Implementing LSR(Immediate)\n");
 
-    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro fuente
-    uint64_t shift_amount = instruct.immr;            // Cantidad de desplazamiento
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn]; 
+    uint64_t shift_amount = instruct.immr;
 
-    // Ejecutar la operación de LSR
     uint64_t result = op1 >> shift_amount;
 
-    // Guardar resultado en rd
     NEXT_STATE.REGS[instruct.rd] = result;
 }
 
 void implement_ADD_extended_register(instruction instruct) {
     printf("Implementing ADD(Extended Register)\n");
 
-    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
-    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];  // Valor del registro rm
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];
+    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];
 
-    // Ejecutar la operación
     uint64_t result = op1 + op2;
    
+    NEXT_STATE.FLAG_N = (result >> 63) & 1; 
+    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; 
 
-    // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
-    NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
-    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
-
-    // Si rd no es X31, actualizar el registro
     if (instruct.rd != 31) {
-        NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+        NEXT_STATE.REGS[instruct.rd] = result; 
        
     }
 }
