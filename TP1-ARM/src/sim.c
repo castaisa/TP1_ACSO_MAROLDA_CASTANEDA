@@ -72,8 +72,6 @@ void implement_ADD_immediate(instruction instruct);
 void implement_LSR_immediate(instruction instruct);
 void implement_ADD_extended_register(instruction instruct);
 
-// void decode_instruction_with_opcode(instruction *instr);
-
 
 const instruction opcode_table[OPCODE_TABLE_SIZE] = {
     {0b1010101100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "G2", "ADDS(Extended Register)"},  // pg 257
@@ -108,28 +106,19 @@ const instruction opcode_table[OPCODE_TABLE_SIZE] = {
 };
 
 
-void process_instruction()
-{
-    /* execute one instruction here. You should use CURRENT_STATE and modify
-     * values in NEXT_STATE. You can call mem_read_32() and mem_write_32() to
-     * access memory. 
-     * */
-    printf("starting-----------\n");
+void process_instruction(){
     uint32_t bytecode = mem_read_32(CURRENT_STATE.PC);
     instruction instruct = decode_instruction(bytecode);
     printf("Instrucción: %s\n", instruct.name);
 
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 
-    // falta:
-        // funcion que con el opcod complete el resto de la instruccion
-        // tabla de hash con los posibles opcodes
     if (strcmp(instruct.name, "ADDS(immediate)") == 0) implement_ADDS_immediate(instruct);
     if (strcmp(instruct.name, "ADDS(Extended Register)") == 0) implement_ADDS_extended_register(instruct);
     if (strcmp(instruct.name, "SUBS(immediate)") == 0) implement_SUBS_immediate(instruct);
     if (strcmp(instruct.name, "SUBS(Extended Register)") == 0) implement_SUBS_extended_register(instruct);
     if (strcmp(instruct.name, "HLT") == 0) implement_HLT(instruct);
-    if (strcmp(instruct.name, "CMP(Extended Register)") == 0) implement_CMP_extended_register(instruct);
+    // if (strcmp(instruct.name, "CMP(Extended Register)") == 0) implement_CMP_extended_register(instruct);
     if (strcmp(instruct.name, "ANDS(Shifted Register)") == 0) implement_ANDS_shifted_register(instruct);
     if (strcmp(instruct.name, "EOR(Shifter Register)") == 0 ) implement_EOR_shifted_register(instruct);
     if (strcmp(instruct.name, "ORR(Shifted Register)") == 0) implement_ORR_shifted_register(instruct);
