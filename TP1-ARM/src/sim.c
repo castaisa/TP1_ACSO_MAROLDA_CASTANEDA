@@ -241,20 +241,17 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
 }
 
 // INSTRUCCIONES -------------------------------------------------------------------------------------------
-
 void implement_ADDS_immediate(instruction instruct) {
     printf("Implementing ADDS(immediate)\n");
 
-    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];
     uint64_t op2 = instruct.alu_immediate;
 
     uint64_t result = op1 + op2;
-    
-    NEXT_STATE.REGS[instruct.rd] = result; 
-
-    NEXT_STATE.FLAG_N = (result >> 63) & 1; 
+    NEXT_STATE.REGS[instruct.rd] = result;
+   
+    NEXT_STATE.FLAG_N = (result >> 63) & 1;
     NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0;
-    
 }
 
 void implement_ADDS_extended_register(instruction instruct) {
@@ -294,89 +291,77 @@ void implement_SUBS_extended_register(instruction instruct) {
     uint64_t op1 = CURRENT_STATE.REGS[instruct.rn]; 
     uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];
 
-    // Ejecutar la operación
     uint64_t result = op1 - op2;
-    
 
-    // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
-    NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
-    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
+    NEXT_STATE.FLAG_N = (result >> 63) & 1;
+    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; 
 
-    // if compare extended register
     if (instruct.rd != 31) {
-        NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+        NEXT_STATE.REGS[instruct.rd] = result; 
         
     }
 }
 
 void implement_HLT(instruction instruct) {
     printf("Implementing HLT\n");
-    RUN_BIT = 0; // Terminar la ejecución
+    RUN_BIT = 0;
 }
 
 void implement_ANDS_shifted_register(instruction instruct) {
     printf("Implementing ANDS(Shifted Register)\n");
 
-    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
-    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];  // Valor del registro rm
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  
+    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm]; 
 
-    // Ejecutar la operación
     uint64_t result = op1 & op2;
    
-    NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+    NEXT_STATE.REGS[instruct.rd] = result;
 
-    // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
-    NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
-    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
+    NEXT_STATE.FLAG_N = (result >> 63) & 1; 
+    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; 
     
 }
 
 void implement_MOVZ(instruction instruct) {
     printf("Implementing MOVZ\n");
 
-    uint64_t imm = instruct.mov_immediate;  // Inmediato MOV
+    uint64_t imm = instruct.mov_immediate; 
 
-    // Ejecutar la operación (sin shift porque hw = 0)
     uint64_t result = imm;
     
-    NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+    NEXT_STATE.REGS[instruct.rd] = result; 
 
-    // Actualizar FLAGS (solo N y Z, porque C y V no están en CPU_State)
-    NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
-    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
+    NEXT_STATE.FLAG_N = (result >> 63) & 1; 
+    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; 
     
 }
 
 void implement_LSL_immediate(instruction instruct) {
     printf("Implementing LSL(Immediate)\n");
 
-    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro fuente
-    uint64_t shift_amount = 64 - instruct.immr;      // Corrección del cálculo del shift
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];
+    uint64_t shift_amount = 64 - instruct.immr; 
 
-    // Ejecutar la operación de LSL
     uint64_t result = op1 << shift_amount;
 
-    // Guardar resultado en rd
     NEXT_STATE.REGS[instruct.rd] = result;
 
-    // Actualizar FLAGS (solo N y Z)
-    NEXT_STATE.FLAG_N = (result >> 63) & 1;  // Flag N (bit 63 indica negativo)
-    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0;  // Flag Z (1 si resultado es 0)
+    NEXT_STATE.FLAG_N = (result >> 63) & 1;  
+    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; 
 }
 
 void implement_STUR(instruction instruct) {
     printf("Implementing STUR\n");
     uint64_t signed_offset;
-    if (instruct.dt_address & (1 << 8)) {  // Verifica si el bit 8 (signo) está encendido
-        signed_offset = (uint64_t)(instruct.dt_address | 0xFFFFFFFFFFFFFF00);  // Extiende el signo
+    if (instruct.dt_address & (1 << 8)) {  
+        signed_offset = (uint64_t)(instruct.dt_address | 0xFFFFFFFFFFFFFF00);
     } else {
-        signed_offset = (uint64_t)(instruct.dt_address & 0x1FF);  // Mantiene los bits originales
+        signed_offset = (uint64_t)(instruct.dt_address & 0x1FF); 
     }
 
-    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset;  // Calculate the address
-    uint32_t value = CURRENT_STATE.REGS[instruct.rd] & 0xFFFFFFFF;  // Get the 32-bit value to store
+    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset;
+    uint32_t value = CURRENT_STATE.REGS[instruct.rd] & 0xFFFFFFFF;
 
-    // Write the 32-bit value to memory
     mem_write_32(address, value);
    
 }
@@ -385,48 +370,42 @@ void implement_STURB(instruction instruct) {
     printf("Implementing STURB\n");
 
      uint64_t signed_offset;
-    if (instruct.dt_address & (1 << 8)) {  // Verifica si el bit 8 (signo) está encendido
-        signed_offset = (uint64_t)(instruct.dt_address | 0xFFFFFFFFFFFFFF00);  // Extiende el signo
+    if (instruct.dt_address & (1 << 8)) { 
+        signed_offset = (uint64_t)(instruct.dt_address | 0xFFFFFFFFFFFFFF00);
     } else {
-        signed_offset = (uint64_t)(instruct.dt_address & 0x1FF);  // Mantiene los bits originales
+        signed_offset = (uint64_t)(instruct.dt_address & 0x1FF);
     }
 
-    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset;  // Calculate the address
+    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset;
 
-    uint8_t value = CURRENT_STATE.REGS[instruct.rd] & 0xFF;  // Get the byte value to store
+    uint8_t value = CURRENT_STATE.REGS[instruct.rd] & 0xFF;
 
-    // Write the byte to memory (considering little-endian format)
-    uint32_t aligned_address = address & ~0x3;  // Align the address to 4 bytes
-    uint32_t aligned_value = mem_read_32(aligned_address);  // Read the aligned 32-bit value
-    uint32_t byte_shift = (address & 0x3) * 8;  // Calculate the byte shift
-    aligned_value = (aligned_value & ~(0xFF << byte_shift)) | (value << byte_shift);  // Insert the byte
-    mem_write_32(aligned_address, aligned_value);  // Write the modified 32-bit value back to memory
+    uint32_t aligned_address = address & ~0x3;
+    uint32_t aligned_value = mem_read_32(aligned_address); 
+    uint32_t byte_shift = (address & 0x3) * 8;  
+    aligned_value = (aligned_value & ~(0xFF << byte_shift)) | (value << byte_shift); 
+    mem_write_32(aligned_address, aligned_value); 
 
 }
 
 void implement_LDUR(instruction instruct) {
     printf("Implementing LDUR\n");
-    // queremos pasar el dt adress de 9 bits a 64 bits, va a depender de si es positivo negativo
     uint64_t signed_offset;
-    if (instruct.dt_address & (1 << 8)) {  // Verifica si el bit 8 (signo) está encendido
-        signed_offset = (uint64_t)(instruct.dt_address | 0xFFFFFFFFFFFFFF00);  // Extiende el signo
+    if (instruct.dt_address & (1 << 8)) {
+        signed_offset = (uint64_t)(instruct.dt_address | 0xFFFFFFFFFFFFFF00);
     } else {
-        signed_offset = (uint64_t)(instruct.dt_address & 0x1FF);  // Mantiene los bits originales
+        signed_offset = (uint64_t)(instruct.dt_address & 0x1FF); 
     }
 
-    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset;  // Calculate the address
+    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset;
 
-    // Read the 32-bit value from memory
     uint32_t value = mem_read_32(address);
     
-    
-    // Write the byte to memory (considering little-endian format)
-    uint32_t aligned_address = address & ~0x3;  // Align the address to 4 bytes
-    uint32_t aligned_value = mem_read_32(aligned_address);  // Read the aligned 32-bit value
-    uint32_t aligned_high = mem_read_32(aligned_address + 4);  // Read the high 32 bits of the aligned value
+    uint32_t aligned_address = address & ~0x3; 
+    uint32_t aligned_value = mem_read_32(aligned_address);
+    uint32_t aligned_high = mem_read_32(aligned_address + 4);
 
     uint64_t concatenado = (uint64_t)aligned_high << 32 | aligned_value;
-    // Guardar el valor en rd
     NEXT_STATE.REGS[instruct.rd] = concatenado;
    
 }
@@ -435,69 +414,61 @@ void implement_LDURB(instruction instruct) {
     printf("Implementing LDURB\n");
 
     uint64_t signed_offset;
-    if (instruct.dt_address & (1 << 8)) {  // Verifica si el bit 8 (signo) está encendido
-        signed_offset = (uint64_t)(instruct.dt_address | 0xFFFFFFFFFFFFFF00);  // Extiende el signo
+    if (instruct.dt_address & (1 << 8)) { 
+        signed_offset = (uint64_t)(instruct.dt_address | 0xFFFFFFFFFFFFFF00);
     } else {
-        signed_offset = (uint64_t)(instruct.dt_address & 0x1FF);  // Mantiene los bits originales
+        signed_offset = (uint64_t)(instruct.dt_address & 0x1FF);
     }
 
-    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset;  // Calculate the address
+    uint64_t address = CURRENT_STATE.REGS[instruct.rn] + signed_offset;
 
-    // Read the byte from memory (considering little-endian format)
-    uint32_t aligned_address = address & ~0x3;  // Align the address to 4 bytes
-    uint32_t aligned_value = mem_read_32(aligned_address);  // Read the aligned 32-bit value
-    uint32_t byte_shift = (address & 0x3) * 8;  // Calculate the byte shift
-    uint8_t value = (aligned_value >> byte_shift) & 0xFF;  // Extract the byte value
+    uint32_t aligned_address = address & ~0x3; 
+    uint32_t aligned_value = mem_read_32(aligned_address);
+    uint32_t byte_shift = (address & 0x3) * 8;
+    uint8_t value = (aligned_value >> byte_shift) & 0xFF;
 
-    // Guardar el valor en rd
     NEXT_STATE.REGS[instruct.rd] = value;
 }
 
 void implement_EOR_shifted_register(instruction instruct) {
     printf("Implementing EOR(Shifter Register)\n");
 
-    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
-    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];  // Valor del registro rm
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];
+    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];
 
-    // Ejecutar la operación
     uint64_t result = op1 ^ op2;
    
-    NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
-
-    // NO ACTUALIZA FLAGS POR AHORA
-    // NEXT_STATE.FLAG_N = (result >> 63) & 1; // N flag (negativo si el bit 63 es 1)
-    // NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Z flag (se activa si resultado es 0)
+    NEXT_STATE.REGS[instruct.rd] = result; 
     
 }
 
 void implement_BCOND(instruction instruct) {
     printf("Implementing BCOND\n");
 
-    // Verificar la condición
     int cond = instruct.rt;
     int branch = 0;
     switch (cond) {
-        case 0b0000:  // BEQ
+        case 0b0000:
             printf("BEQ\n");
             branch = CURRENT_STATE.FLAG_Z;
             break;
-        case 0b0001:  // BNE
+        case 0b0001:
             printf("BNE\n");
             branch = !CURRENT_STATE.FLAG_Z;
             break;
-        case 0b1100:  // BGT
+        case 0b1100:
             printf("BGT\n");
             branch = !CURRENT_STATE.FLAG_Z && !CURRENT_STATE.FLAG_N;
             break;
-        case 0b1011:  // BLT
+        case 0b1011:
             printf("BLT\n");
             branch = CURRENT_STATE.FLAG_N;
             break;
-        case 0b1010:  // BGE
+        case 0b1010:
             printf("BGE\n");
             branch = !CURRENT_STATE.FLAG_N;
             break;
-        case 0b1101:  // BLE
+        case 0b1101:
             printf("BLE\n");
             branch = CURRENT_STATE.FLAG_Z || CURRENT_STATE.FLAG_N;
             break;
@@ -520,20 +491,19 @@ void implement_BCOND(instruction instruct) {
 void implement_ORR_shifted_register(instruction instruct) {
     printf("Implementing ORR(Shifter Register)\n");
 
-    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];  // Valor del registro rn
-    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm];  // Valor del registro rm
+    uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];
+    uint64_t op2 = CURRENT_STATE.REGS[instruct.rm]; 
 
-    // Ejecutar la operación
     uint64_t result = op1 | op2;
     
-    NEXT_STATE.REGS[instruct.rd] = result; // Guardar resultado en rd
+    NEXT_STATE.REGS[instruct.rd] = result;
 }
 
 void implement_STURH(instruction instruct) {
     printf("Implementing STURH\n");
 
     uint64_t signed_offset;
-    if (instruct.dt_address & (1 << 8)) {  // Verifica si el bit 8 (signo) está encendido
+    if (instruct.dt_address & (1 << 8)) { 
         signed_offset = (uint64_t)(instruct.dt_address | 0xFFFFFFFFFFFFFF00);  // Extiende el signo
     } else {
         signed_offset = (uint64_t)(instruct.dt_address & 0x1FF);  // Mantiene los bits originales
