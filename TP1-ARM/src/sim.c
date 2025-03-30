@@ -220,7 +220,16 @@ void decode_completely_instruction(instruction *instr, uint32_t bytecode) {
         instr->shamt = (bytecode >> 10) & MASK_26;     // Bits [15:10] - immr
         instr->rm = (bytecode >> 16) & MASK_26;     // Bits [21:16] - imms
         strcpy(instr->type, "R");
-    } else if (strcmp(instr->type, "CB") == 0) {
+        
+    } 
+    // else if (strcmp(instr->type, "G5") == 0) {
+    //     instr->rd = bytecode & MASK_5bits;               // Bits [4:0] - Registro destino
+    //     instr->rn = (bytecode >> 5) & MASK_5bits;        // Bits [9:5] - Registro fuente
+    //     instr->imms = (bytecode >> 10) & MASK_26;     // Bits [15:10] - immr
+    //     instr->immr = (bytecode >> 16) & MASK_26;     // Bits [21:16] - imms
+    //     strcpy(instr->type, "G5");
+    // } 
+    else if (strcmp(instr->type, "CB") == 0) {
         instr->cond_br_address = (bytecode >> 5) & MASK_19bits;     // Bits [23:5] - Dirección de salto condicional
         instr->rt = (bytecode) & MASK_5bits;  // Bits [5:0] - Dirección de salto condicional
         strcpy(instr->type, "CB");
@@ -335,7 +344,7 @@ void implement_LSL_immediate(instruction instruct) {
     printf("Implementing LSL(Immediate)\n");
 
     uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];
-    uint64_t shift_amount = 64 - instruct.shamt; 
+    uint64_t shift_amount = 64 - instruct.rm; 
 
     uint64_t result = op1 << shift_amount;
 
@@ -539,6 +548,7 @@ void implement_LDURH(instruction instruct) {
     CURRENT_STATE.REGS[instruct.rd] = loaded_value;  
 }
 
+
 void implement_CBZ(instruction instruct) {
     printf("Implementing CBZ\n");
 
@@ -553,7 +563,7 @@ void implement_CBZ(instruction instruct) {
     if (zero == 1) {
         uint64_t signed_offset;
 
-        
+    
         if (instruct.cond_br_address & (1 << 18)) {
             signed_offset = (uint64_t)(instruct.cond_br_address | 0xFFFFFFFFFFFC0000); 
         } else {
@@ -561,19 +571,23 @@ void implement_CBZ(instruction instruct) {
         }
 
         uint64_t address = CURRENT_STATE.PC + (signed_offset << 2);
+       
+
         
         if (address % 4 != 0) {
+            
             return;
         }
 
+        
         NEXT_STATE.PC = address;
 
         
     } else {
+        
         NEXT_STATE.PC = CURRENT_STATE.PC + 4;
     }
 }
-
 void implement_CBNZ(instruction instruct) {
     printf("Implementing CBNZ\n");
 
@@ -584,25 +598,29 @@ void implement_CBNZ(instruction instruct) {
     } else {
         zero = 0; 
     }
-    
     if (zero == 0) {
         uint64_t signed_offset;
 
         
         if (instruct.br_address & (1 << 18)) {
-            signed_offset = (uint64_t)(instruct.cond_br_address | 0xFFFFFFFFFFFC0000); 
+            signed_offset = (uint64_t)(instruct.cond_br_address | 0xFFFFFFFFFFFC0000);  
         } else {
-            signed_offset = (uint64_t)(instruct.cond_br_address & 0x3FFFF);
+            signed_offset = (uint64_t)(instruct.cond_br_address & 0x3FFFF); 
         }
-
+        
         uint64_t address = CURRENT_STATE.PC + (signed_offset << 2);
 
+        
         if (address % 4 != 0) {
             return;
         }
 
+       
         NEXT_STATE.PC = address;
+
+        
     } else {
+        
         NEXT_STATE.PC = CURRENT_STATE.PC + 4;
     }
 }
@@ -668,7 +686,7 @@ void implement_LSR_immediate(instruction instruct) {
     printf("Implementing LSR(Immediate)\n");
 
     uint64_t op1 = CURRENT_STATE.REGS[instruct.rn]; 
-    uint64_t shift_amount = instruct.shamt;
+    uint64_t shift_amount = instruct.rm;
 
     uint64_t result = op1 >> shift_amount;
 
