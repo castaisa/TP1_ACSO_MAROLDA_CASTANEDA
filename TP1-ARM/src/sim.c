@@ -335,7 +335,7 @@ void implement_LSL_immediate(instruction instruct) {
     printf("Implementing LSL(Immediate)\n");
 
     uint64_t op1 = CURRENT_STATE.REGS[instruct.rn];
-    uint64_t shift_amount = 64 - instruct.immr; 
+    uint64_t shift_amount = 64 - instruct.shamt; 
 
     uint64_t result = op1 << shift_amount;
 
@@ -668,7 +668,7 @@ void implement_LSR_immediate(instruction instruct) {
     printf("Implementing LSR(Immediate)\n");
 
     uint64_t op1 = CURRENT_STATE.REGS[instruct.rn]; 
-    uint64_t shift_amount = instruct.immr;
+    uint64_t shift_amount = instruct.shamt;
 
     uint64_t result = op1 >> shift_amount;
 
